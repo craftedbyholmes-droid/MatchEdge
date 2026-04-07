@@ -1,0 +1,37 @@
+SUPABASE PASSWORD RESET SETUP
+
+1. Go to your Supabase project
+2. Open: Authentication -> URL Configuration
+
+Set:
+- Site URL
+  http://localhost:3000
+
+Add these Redirect URLs:
+- http://localhost:3000/reset-password
+- https://YOUR-PRODUCTION-DOMAIN/reset-password
+
+If you use Vercel preview deployments, add the matching preview reset URL too.
+
+3. In your local .env.local make sure:
+- NEXT_PUBLIC_APP_URL=http://localhost:3000
+- NEXT_PUBLIC_SUPABASE_URL=...
+- NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+- SUPABASE_SERVICE_ROLE_KEY=...
+
+4. Restart your dev server after editing .env.local
+
+5. Test flow:
+- open /forgot-password
+- enter your email
+- submit
+- open email link
+- it should return you to /reset-password
+- enter new password
+- go back to /login
+- sign in
+
+IMPORTANT
+- You cannot read the old password from Supabase
+- Supabase stores password hashes, not plaintext passwords
+- The only proper recovery path is reset-password by email

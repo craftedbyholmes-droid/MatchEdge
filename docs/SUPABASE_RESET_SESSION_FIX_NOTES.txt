@@ -1,0 +1,21 @@
+RESET PASSWORD SESSION FIX
+
+Why you saw "Auth session missing!":
+- the reset page tried to call updateUser({ password }) before a recovery session had been established
+
+What this patch does:
+- if the reset link contains ?code=..., it calls:
+  supabase.auth.exchangeCodeForSession(code)
+- if the reset link uses old-style hash tokens, it falls back to:
+  supabase.auth.setSession({ access_token, refresh_token })
+
+Supabase references:
+- resetPasswordForEmail supports PKCE flow
+- exchangeCodeForSession is used to turn the recovery code into a live session
+- after the session exists, updateUser({ password }) can work
+
+After applying this patch:
+1. request a fresh password reset email
+2. click the newest link
+3. wait for "Recovery session ready"
+4. enter the new password
