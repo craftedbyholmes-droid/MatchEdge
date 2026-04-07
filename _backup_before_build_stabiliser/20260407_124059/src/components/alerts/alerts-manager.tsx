@@ -316,10 +316,10 @@ export function AlertsManager({
                   <div key={row.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
                     <div className="text-sm font-medium">{row.event_name || "Unnamed event"}</div>
                     <div className="mt-2 text-xs text-slate-500">
-                      {row.delivery_channel} â€¢ {row.delivery_status} â€¢ {row.sport_key || "general"}
+                      {row.delivery_channel} • {row.delivery_status} • {row.sport_key || "general"}
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      {row.trigger_reason || "No trigger reason recorded"} â€¢ {new Date(row.created_at).toLocaleString()}
+                      {row.trigger_reason || "No trigger reason recorded"} • {new Date(row.created_at).toLocaleString()}
                     </div>
                   </div>
                 ))
@@ -343,7 +343,7 @@ export function AlertsManager({
                   <div>
                     <div className="text-sm font-medium">{rule.title}</div>
                     <div className="mt-2 text-xs text-slate-500">
-                      {rule.enabled ? "Enabled" : "Disabled"} â€¢ {rule.strategy_mode || "any"} â€¢ minimum profit {rule.min_profit_percent ?? 0}%
+                      {rule.enabled ? "Enabled" : "Disabled"} • {rule.strategy_mode || "any"} • minimum profit {rule.min_profit_percent ?? 0}%
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
                       Sports: {rule.sport_keys?.length ? rule.sport_keys.join(", ") : "all"}
@@ -358,7 +358,7 @@ export function AlertsManager({
                   </div>
 
                   <div className="text-xs text-slate-500">
-                    Trigger: {rule.trigger_type} â€¢ Cooldown: {rule.cooldown_minutes}m â€¢ Digest: {rule.digest_mode}
+                    Trigger: {rule.trigger_type} • Cooldown: {rule.cooldown_minutes}m • Digest: {rule.digest_mode}
                     <br />
                     Last triggered: {rule.last_triggered_at ? new Date(rule.last_triggered_at).toLocaleString() : "never"}
                   </div>

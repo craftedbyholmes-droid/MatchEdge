@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 
 function getLegStake(leg: any) {
@@ -55,7 +55,7 @@ function gcd(a: number, b: number): number {
 }
 
 function decimalToFractional(decimalOdds: number) {
-  if (!Number.isFinite(decimalOdds) || decimalOdds <= 1) return "Ã¢â‚¬â€";
+  if (!Number.isFinite(decimalOdds) || decimalOdds <= 1) return "â€”";
   const profitPart = decimalOdds - 1;
   const precision = 100;
   const numerator = Math.round(profitPart * precision);
@@ -93,7 +93,7 @@ function computeSelectionMetrics(opportunity: Opportunity, maxOutlay: number) {
 
   const adjustedLegs = opportunity.stakePlan.map((leg) => ({
     ...leg,
-    adjustedStake: Number((getLegStake(leg) * scale).toFixed(2)),
+    adjustedStake: Number((leg.stake * scale).toFixed(2)),
   }));
 
   const returns = adjustedLegs.map((leg) => leg.adjustedStake * leg.odds);
@@ -279,10 +279,10 @@ export function WeeklyPlanClient({
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
           <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Weekly Plan Range</div>
           <div className="mt-4 text-3xl font-semibold">
-            Ã‚Â£{planSummary.minProfit.toFixed(2)} to Ã‚Â£{planSummary.maxProfit.toFixed(2)}
+            Â£{planSummary.minProfit.toFixed(2)} to Â£{planSummary.maxProfit.toFixed(2)}
           </div>
           <div className="mt-3 text-sm text-slate-400">
-            Active combinations: {planSummary.count} Ã¢â‚¬Â¢ Completed: {planSummary.completedCount}
+            Active combinations: {planSummary.count} â€¢ Completed: {planSummary.completedCount}
           </div>
           <div className="mt-3 text-sm text-slate-500">
             Range updates every time a selection is excluded, an outlay changes, or all links on a row are clicked.
@@ -303,17 +303,17 @@ export function WeeklyPlanClient({
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                  {opportunity.sport}{opportunity.marketLabel ? ` Ã¢â‚¬Â¢ ${opportunity.marketLabel}` : ""} Ã¢â‚¬Â¢ {bucket === "qualifying" ? "Welcome/Qualifying" : "Profit"}
+                  {opportunity.sport}{opportunity.marketLabel ? ` â€¢ ${opportunity.marketLabel}` : ""} â€¢ {bucket === "qualifying" ? "Welcome/Qualifying" : "Profit"}
                 </div>
                 <div className="mt-2 text-xl font-semibold">{opportunity.eventName}</div>
-                <div className="mt-3 text-sm text-slate-400">{opportunity.notes.join(" Ã¢â‚¬Â¢ ")}</div>
+                <div className="mt-3 text-sm text-slate-400">{opportunity.notes.join(" â€¢ ")}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 xl:min-w-[360px]">
                 <Metric label="Implied %" value={`${(opportunity.impliedProbability * 100).toFixed(2)}%`} />
                 <Metric label="Margin" value={`${opportunity.marginPercent.toFixed(2)}%`} />
-                <Metric label="Min Profit" value={`Ã‚Â£${metrics.minProfit.toFixed(2)}`} />
-                <Metric label="Max Profit" value={`Ã‚Â£${metrics.maxProfit.toFixed(2)}`} />
+                <Metric label="Min Profit" value={`Â£${metrics.minProfit.toFixed(2)}`} />
+                <Metric label="Max Profit" value={`Â£${metrics.maxProfit.toFixed(2)}`} />
               </div>
             </div>
 
@@ -344,7 +344,7 @@ export function WeeklyPlanClient({
                 </button>
 
                 <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-slate-300">
-                  Completion: {rowState.completed ? "Ã¢Å“â€œ Completed" : "Pending"}
+                  Completion: {rowState.completed ? "âœ“ Completed" : "Pending"}
                 </div>
               </div>
 
@@ -358,10 +358,10 @@ export function WeeklyPlanClient({
                       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                           <div className="text-sm">
-                            <span className="font-medium">{leg.outcome}</span> Ã¢â‚¬Â¢ {leg.bookmaker}
+                            <span className="font-medium">{leg.outcome}</span> â€¢ {leg.bookmaker}
                           </div>
                           <div className="mt-2 text-sm text-slate-400">
-                            Current odds: {formatOdds(leg.odds)} Ã¢â‚¬Â¢ Stake: Ã‚Â£{leg.adjustedStake.toFixed(2)}
+                            Current odds: {formatOdds(leg.odds)} â€¢ Stake: Â£{leg.adjustedStake.toFixed(2)}
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
                             Last profitable price: {lastProfitableOdds ? formatOdds(lastProfitableOdds) : "Not applicable"}
@@ -378,7 +378,7 @@ export function WeeklyPlanClient({
                                 : "border border-cyan-400/30 bg-cyan-500/10 text-cyan-200"
                             }`}
                           >
-                            {clicked ? `Ã¢Å“â€œ ${leg.bookmaker} opened` : `Open ${leg.bookmaker}`}
+                            {clicked ? `âœ“ ${leg.bookmaker} opened` : `Open ${leg.bookmaker}`}
                           </button>
                         </div>
                       </div>

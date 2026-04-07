@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/layout/app-shell";
+﻿import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { OffersGrid } from "@/components/offers/offers-grid";
 import { getOffersPageData, type OfferRow } from "@/lib/offers";
