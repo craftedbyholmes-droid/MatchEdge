@@ -1,45 +1,56 @@
+﻿import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 
 export async function POST() {
-  const cookieStore = cookies();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("sb-access-token")?.value ?? "";
 
-  const supabaseAdmin = createClient(supabaseUrl, serviceRole);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const supabaseUser = createClient(
-    supabaseUrl,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          Authorization: cookieStore.get("sb-access-token")?.value
-            ? `Bearer ${cookieStore.get("sb-access-token")?.value}`
-            : "",
-        },
+  if (!supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json(
+      { error: "Missing Supabase environment variables." },
+      { status: 500 }
+    );
+  }
+
+  if (!accessToken) {
+    return NextResponse.json(
+      { error: "Not authenticated." },
+      { status: 401 }
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-    }
-  );
+    },
+  });
 
   const {
     data: { user },
-  } = await supabaseUser.auth.getUser();
+    error: userError,
+  } = await supabase.auth.getUser(accessToken);
 
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Not authenticated" }), {
-      status: 401,
-    });
+  if (userError || !user) {
+    return NextResponse.json(
+      { error: "Unable to verify user." },
+      { status: 401 }
+    );
   }
 
-  // DELETE USER (CASCADE WILL HANDLE REST)
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+  const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
+  if (deleteError) {
+    return NextResponse.json(
+      { error: deleteError.message },
+      { status: 500 }
+    );
   }
 
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+  return NextResponse.json({ ok: true });
 }
