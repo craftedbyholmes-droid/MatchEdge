@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import supabaseAdmin from '@/lib/supabase'
-import { fetchUpcomingFixtures, sdDateToISO, COVERED_LEAGUES } from '@/lib/soccerDataApi'
+import { fetchUpcomingFixtures, sdDateToISO } from '@/lib/soccerDataApi'
 
 export async function GET(request) {
   if (request.headers.get('authorization') !== 'Bearer ' + process.env.CRON_SECRET)
@@ -11,9 +11,9 @@ export async function GET(request) {
     let skipped = 0
     for (const f of fixtures) {
       const kickoff = sdDateToISO(f.date, f.time)
-      if (!kickoff) { skipped++; continue }
+      if (!kickoff || !f.home_team || !f.away_team) { skipped++; continue }
       const row = {
-        fixture_id: 'sd_' + f.match_id,
+        fixture_id: 'sd_' + f.sd_match_id,
         home_team: f.home_team,
         away_team: f.away_team,
         league: f.league_name,
@@ -22,7 +22,7 @@ export async function GET(request) {
         kickoff_time: kickoff,
         status: 'scheduled',
         score_state: 1,
-        sd_match_id: f.match_id,
+        sd_match_id: f.sd_match_id,
         excitement_rating: f.excitement_rating
       }
       const { error } = await supabaseAdmin.from('matches').upsert(row, { onConflict: 'fixture_id' })
