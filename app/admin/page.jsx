@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
-import supabaseClient from '@/lib/supabaseClient'
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL
 const CRON = process.env.NEXT_PUBLIC_CRON_SECRET
@@ -13,6 +12,8 @@ export default function AdminPage() {
   const [giftEmail, setGiftEmail] = useState('')
   const [giftExpiry, setGiftExpiry] = useState('')
   const [giftMsg, setGiftMsg] = useState('')
+  const [fetchDate, setFetchDate] = useState('')
+  const [fetchDateEnd, setFetchDateEnd] = useState('')
   const [socialPersona, setSocialPersona] = useState('gordon')
   const [fixtureId, setFixtureId] = useState('')
   const [market, setMarket] = useState('match_result')
@@ -39,6 +40,29 @@ export default function AdminPage() {
       const data = await res.json()
       addLog(path + ' — ' + JSON.stringify(data), res.ok)
     } catch(err) { addLog(path + ' ERROR: ' + err.message, false) }
+  }
+
+  async function fetchDateRange() {
+    if (!fetchDate) { addLog('Select a start date first.', false); return }
+    const start = new Date(fetchDate)
+    const end = fetchDateEnd ? new Date(fetchDateEnd) : new Date(fetchDate)
+    const dates = []
+    const cur = new Date(start)
+    while (cur <= end) {
+      dates.push(cur.toISOString().split('T')[0])
+      cur.setDate(cur.getDate() + 1)
+    }
+    addLog('Fetching ' + dates.length + ' date(s): ' + dates.join(', '), null)
+    for (const date of dates) {
+      const path = '/api/cron?date=' + date
+      addLog('Fetching ' + date + '...', null)
+      try {
+        const res = await fetch(path, { headers: H })
+        const data = await res.json()
+        addLog(date + ' — inserted: ' + data.inserted + ' / total: ' + data.total, res.ok)
+      } catch(err) { addLog(date + ' ERROR: ' + err.message, false) }
+    }
+    addLog('Date range fetch complete. Now run Score then Cache.', true)
   }
 
   async function grantAccess(action) {
@@ -76,7 +100,7 @@ export default function AdminPage() {
   const section = { background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '16px' }
 
   if (!user) return <div style={{ padding: '40px 0', color: '#6b7280' }}>Loading...</div>
-  if (!isAdmin) return <div style={{ padding: '40px 0' }}><h1 style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444' }}>Access Denied</h1><p style={{ color: '#6b7280', marginTop: '8px' }}>Admin access required.</p></div>
+  if (!isAdmin) return <div style={{ padding: '40px 0' }}><h1 style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444' }}>Access Denied</h1></div>
 
   return (
     <div style={{ paddingBottom: '60px' }}>
@@ -86,7 +110,7 @@ export default function AdminPage() {
         <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '16px' }}>Cron Controls</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {[
-            ['/api/cron', 'Fetch Fixtures'],
+            ['/api/cron', 'Fetch Today+Tomorrow'],
             ['/api/cron/injuries', 'Injuries'],
             ['/api/cron/score', 'Score'],
             ['/api/cron/projected', 'Projected'],
@@ -101,6 +125,27 @@ export default function AdminPage() {
           ].map(([path, label]) => (
             <button key={path} onClick={() => cronCall(path)} style={btnStyle()}>{label}</button>
           ))}
+        </div>
+      </div>
+
+      <div style={section}>
+        <h2 style={{ fontWeight: 700, marginBottom: '6px', fontSize: '16px' }}>Fetch Fixtures by Date Range</h2>
+        <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '14px' }}>Use this to pull weekend fixtures or backfill any date. Enter a single date or a range. Then run Score and Cache after.</p>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 140px' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>From date</div>
+            <input style={inputStyle} type='date' value={fetchDate} onChange={e => setFetchDate(e.target.value)} />
+          </div>
+          <div style={{ flex: '1 1 140px' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>To date (optional)</div>
+            <input style={inputStyle} type='date' value={fetchDateEnd} onChange={e => setFetchDateEnd(e.target.value)} />
+          </div>
+          <div style={{ paddingTop: '18px' }}>
+            <button onClick={fetchDateRange} style={btnStyle('#185FA5')}>Fetch Dates</button>
+          </div>
+        </div>
+        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+          Example: set From = this Saturday, To = this Sunday, then click Fetch Dates. Then run Score, then Cache.
         </div>
       </div>
 
