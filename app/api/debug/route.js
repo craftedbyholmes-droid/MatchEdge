@@ -8,7 +8,7 @@ export async function GET(request) {
     const hasKey = !!key
     const keyPreview = key ? key.substring(0, 6) + '...' : 'MISSING'
     const res = await fetch('https://v3.football.api-sports.io/fixtures?league=39&season=2024&date=2026-05-10', {
-      headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': 'v3.football.api-sports.io' }
+      headers: { 'x-apisports-key': key }
     })
     const data = await res.json()
     return NextResponse.json({
@@ -17,8 +17,7 @@ export async function GET(request) {
       apiStatus: res.status,
       resultsCount: data.response?.length || 0,
       errors: data.errors || null,
-      firstResult: data.response?.[0] || null,
-      rawHeaders: Object.fromEntries(res.headers.entries())
+      firstResult: data.response?.[0]?.fixture || null
     })
   } catch(err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
