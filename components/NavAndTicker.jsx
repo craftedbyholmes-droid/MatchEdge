@@ -23,6 +23,7 @@ export default function NavAndTicker() {
   const links = [
     { href: '/dashboard', label: 'Today' },
     { href: '/upcoming', label: 'Upcoming' },
+    { href: '/worldcup', label: 'World Cup', highlight: true },
     { href: '/tipsters', label: 'Tipsters' },
     { href: '/results', label: 'Results' },
     { href: '/pricing', label: 'Pricing' },
@@ -37,15 +38,19 @@ export default function NavAndTicker() {
           {isMobile ? (
             <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '22px', cursor: 'pointer' }}>{menuOpen ? 'x' : '='}</button>
           ) : (
-            <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-              {links.map(l => <Link key={l.href} href={l.href} style={{ color: '#ccc', fontSize: '14px' }}>{l.label}</Link>)}
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              {links.map(l => (
+                <Link key={l.href} href={l.href} style={{ color: l.highlight ? '#f0c040' : '#ccc', fontSize: '14px', fontWeight: l.highlight ? 700 : 400 }}>{l.label}</Link>
+              ))}
               {plan === 'edge' && <Link href='/admin' style={{ color: '#f0c040', fontSize: '14px', fontWeight: 600 }}>Admin</Link>}
             </div>
           )}
         </div>
         {isMobile && menuOpen && (
           <div style={{ background: '#0d0d14', borderTop: '1px solid #2a2a3a', padding: '12px 0' }}>
-            {links.map(l => <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: '#ccc' }}>{l.label}</Link>)}
+            {links.map(l => (
+              <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: l.highlight ? '#f0c040' : '#ccc', fontWeight: l.highlight ? 700 : 400 }}>{l.label}</Link>
+            ))}
             {plan === 'edge' && <Link href='/admin' onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: '#f0c040' }}>Admin</Link>}
           </div>
         )}

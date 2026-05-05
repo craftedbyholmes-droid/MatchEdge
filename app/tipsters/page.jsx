@@ -26,18 +26,9 @@ export default function TipstersPage() {
     fetch('/api/personas/picks').then(r => r.json()).then(d => setPicks(Array.isArray(d) ? d : [])).catch(() => {})
   }, [])
 
-  function getStats(personaId) {
-    return season.find(s => s.persona === personaId) || { wins: 0, total_picks: 0, profit_loss: 0, win_rate: 0 }
-  }
-
-  function getHistory(personaId) {
-    return history.filter(h => h.persona === personaId)
-  }
-
-  function getPicks(personaId) {
-    return picks.filter(p => p.persona === personaId)
-  }
-
+  function getStats(id) { return season.find(s => s.persona === id) || { wins: 0, total_picks: 0, profit_loss: 0 } }
+  function getHistory(id) { return history.filter(h => h.persona === id) }
+  function getPicks(id) { return picks.filter(p => p.persona === id) }
   const plColour = (pl) => pl > 0 ? '#22c55e' : pl < 0 ? '#ef4444' : '#9ca3af'
   const outcomeColour = (o) => o === 'win' ? '#22c55e' : o === 'loss' ? '#ef4444' : o === 'void' ? '#f59e0b' : '#6b7280'
   const outcomeLabel = (o) => o === 'win' ? 'WIN' : o === 'loss' ? 'LOSS' : o === 'void' ? 'VOID' : 'PENDING'
@@ -46,6 +37,17 @@ export default function TipstersPage() {
     <div style={{ paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Tipsters</h1>
 
+      {/* Matchday notice */}
+      <div style={{ background: '#13131a', border: '1px solid #0F6E5660', borderRadius: '8px', padding: '14px 18px', marginBottom: '24px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F6E56', marginBottom: '6px' }}>When do picks go up?</div>
+        <div style={{ fontSize: '13px', color: '#9ca3af', lineHeight: '1.6' }}>
+          Gaffer Gordon, Stats Stan and Punter Pez publish their selections on the morning of each matchday. Picks are generated automatically from the first cron run of the day and will appear here on matchday morning.
+          <br /><br />
+          The earlier you check, the better the odds available with bookmakers — engine scores are published before the market fully reacts.
+        </div>
+      </div>
+
+      {/* Persona cards */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
         {Object.entries(PERSONA_META).map(([id, meta]) => {
           const s = getStats(id)
@@ -56,15 +58,9 @@ export default function TipstersPage() {
               <div style={{ color: meta.colour, fontWeight: 700, fontSize: '16px', marginBottom: '2px' }}>{meta.name}</div>
               <div style={{ color: '#6b7280', fontSize: '12px', marginBottom: '10px' }}>{meta.market}</div>
               <div style={{ color: '#9ca3af', fontSize: '12px', marginBottom: '12px' }}>{meta.bio}</div>
-              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div>
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>W/Total ({wr}%)</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div>
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>Season P+L</div>
-                </div>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div><div style={{ fontSize: '11px', color: '#6b7280' }}>W/Total ({wr}%)</div></div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: '#6b7280' }}>Season P+L</div></div>
               </div>
             </div>
           )
@@ -77,7 +73,10 @@ export default function TipstersPage() {
         <>
           <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px' }}>Today's Picks</h2>
           {picks.length === 0 ? (
-            <div style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>No picks generated yet today.</div>
+            <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '6px' }}>No picks yet today</div>
+              <div style={{ fontSize: '12px', color: '#4b5563' }}>Picks are published on matchday morning. Check back on the next matchday.</div>
+            </div>
           ) : (
             <div style={{ marginBottom: '24px' }}>
               {picks.map(pick => {
@@ -98,9 +97,8 @@ export default function TipstersPage() {
               })}
             </div>
           )}
-
           <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px' }}>Pick History</h2>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {Object.entries(PERSONA_META).map(([id, meta]) => (
               <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '6px 16px', background: activeTab === id ? meta.colour : '#1c1c28', color: activeTab === id ? '#fff' : '#9ca3af', border: '1px solid ' + (activeTab === id ? meta.colour : '#2a2a3a'), borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
                 {meta.name}
