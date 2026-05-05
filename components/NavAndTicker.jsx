@@ -2,14 +2,33 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePlan } from '@/lib/usePlan'
+
 export default function NavAndTicker() {
   const [isMobile, setIsMobile] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [ticker, setTicker] = useState([])
   const { plan } = usePlan()
-  useEffect(() => { const check = () => setIsMobile(window.innerWidth <= 768); check(); window.addEventListener('resize', check); return () => window.removeEventListener('resize', check) }, [])
-  useEffect(() => { fetch('/api/stats?ticker=true').then(r => r.json()).then(d => setTicker(d.ticker || [])).catch(() => {}) }, [])
-  const links = [{ href: '/dashboard', label: 'Today' }, { href: '/tomorrow', label: 'Tomorrow' }, { href: '/tipsters', label: 'Tipsters' }, { href: '/results', label: 'Results' }, { href: '/pricing', label: 'Pricing' }, { href: '/account', label: 'Account' }]
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/stats?ticker=true').then(r => r.json()).then(d => setTicker(d.ticker || [])).catch(() => {})
+  }, [])
+
+  const links = [
+    { href: '/dashboard', label: 'Today' },
+    { href: '/upcoming', label: 'Upcoming' },
+    { href: '/tipsters', label: 'Tipsters' },
+    { href: '/results', label: 'Results' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/account', label: 'Account' },
+  ]
+
   return (
     <>
       <nav style={{ background: '#0d0d14', borderBottom: '1px solid #2a2a3a', position: 'sticky', top: 0, zIndex: 100, padding: '0 16px' }}>
@@ -32,7 +51,7 @@ export default function NavAndTicker() {
         )}
       </nav>
       {ticker.length > 0 && (
-        <div style={{ background: '#111118', borderBottom: '1px solid #2a2a3a', padding: '6px 16px', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: '13px' }}>
+        <div style={{ background: '#111118', borderBottom: '1px solid #2a2a3a', padding: '6px 16px', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: '13px', color: '#aaa' }}>
           {ticker.map((t, i) => (
             <span key={i} style={{ marginRight: '32px' }}>
               <span style={{ color: t.outcome === 'win' ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{t.outcome === 'win' ? 'WIN' : 'LOSS'}</span>
