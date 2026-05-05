@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
 import PlanGate from '@/components/PlanGate'
 
-const LEAGUE_ORDER = ['Bundesliga', 'La Liga', 'Ligue 1', 'Premier League', 'Serie A']
+const LEAGUE_ORDER = ['Bundesliga', 'La Liga', 'Ligue 1', 'Premier League', 'Premiership', 'Serie A']
 const LEAGUE_COLOURS = {
   'Bundesliga':    '#d00',
   'La Liga':       '#c60',
