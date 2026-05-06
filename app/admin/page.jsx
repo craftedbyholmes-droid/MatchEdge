@@ -1,203 +1,269 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
+import { useRouter } from 'next/navigation'
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL
-const CRON = process.env.NEXT_PUBLIC_CRON_SECRET
-const H = { 'Content-Type': 'application/json', 'authorization': 'Bearer ' + CRON }
+const CRON_SECRET = process.env.NEXT_PUBLIC_CRON_SECRET
+
+const CRON_BUTTONS = [
+  { label: 'Fetch Fixtures',  path: '/api/cron',              desc: 'Pull all upcoming fixtures from SoccerData' },
+  { label: 'Standings',       path: '/api/cron/standings',    desc: 'Fetch all league tables — run before Score' },
+  { label: 'Injuries',        path: '/api/cron/injuries',     desc: 'Update sidelined and injury data' },
+  { label: 'Score',           path: '/api/cron/score',        desc: 'Run engine on all upcoming fixtures' },
+  { label: 'Projected',       path: '/api/cron/projected',    desc: 'Advance score state for projected lineups' },
+  { label: 'Lineups',         path: '/api/cron/lineups',      desc: 'Poll for confirmed lineups' },
+  { label: 'Bench Impact',    path: '/api/cron/bench-impact', desc: 'Calculate bench impact flags' },
+  { label: 'Cache',           path: '/api/cron/cache',        desc: 'Rebuild matches_today cache' },
+  { label: 'Personas',        path: '/api/personas',          desc: 'Generate tipster picks for today' },
+  { label: 'Live',            path: '/api/cron/live',         desc: 'Update live scores' },
+  { label: 'Settle',          path: '/api/cron/settle',       desc: 'Settle picks and update P&L' },
+  { label: 'Rollup',          path: '/api/cron/rollup',       desc: 'Write match events to player stats' },
+  { label: 'Calibrate',       path: '/api/cron/calibrate',    desc: 'Generate weekly weight suggestions' },
+  { label: 'Midnight Chain',  path: '/api/cron/midnight',     desc: 'Full midnight pipeline' }
+]
 
 export default function AdminPage() {
-  const { user } = usePlan()
+  const { user, plan } = usePlan()
+  const router = useRouter()
   const [log, setLog] = useState([])
+  const [running, setRunning] = useState(null)
   const [giftEmail, setGiftEmail] = useState('')
   const [giftExpiry, setGiftExpiry] = useState('')
   const [giftMsg, setGiftMsg] = useState('')
-  const [fetchFrom, setFetchFrom] = useState('')
-  const [fetchTo, setFetchTo] = useState('')
-  const [socialPersona, setSocialPersona] = useState('gordon')
-  const [fixtureId, setFixtureId] = useState('')
-  const [market, setMarket] = useState('match_result')
-  const [selection, setSelection] = useState('')
-  const [oddsFrac, setOddsFrac] = useState('')
-  const [oddsDec, setOddsDec] = useState('')
-  const [score, setScore] = useState('')
-  const [generatedPost, setGeneratedPost] = useState(null)
-  const [postId, setPostId] = useState('')
-  const [outcome, setOutcome] = useState('win')
-  const [finalScore, setFinalScore] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo]     = useState('')
+  const [fetchMsg, setFetchMsg] = useState('')
+  const [weightData, setWeightData] = useState(null)
+  const [activeSection, setActiveSection] = useState('crons')
 
-  const isAdmin = user?.email === ADMIN_EMAIL
+  useEffect(() => {
+    if (user && user.email !== ADMIN_EMAIL) router.push('/')
+  }, [user])
 
-  function addLog(msg, ok) {
-    const ts = new Date().toLocaleTimeString()
-    setLog(l => [...l, { ts, msg, ok }])
+  useEffect(() => {
+    if (activeSection === 'weights') loadWeights()
+  }, [activeSection])
+
+  function addLog(msg, type = 'info') {
+    const ts = new Date().toLocaleTimeString('en-GB')
+    setLog(l => [...l.slice(-49), { ts, msg, type }])
   }
 
-  async function cronCall(path) {
-    addLog('Running ' + path + '...', null)
+  async function runCron(path, label) {
+    setRunning(label)
+    addLog('Running ' + path + '...')
     try {
-      const res = await fetch(path, { headers: H })
+      const res = await fetch(path, { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
       const data = await res.json()
-      addLog(path + ' — ' + JSON.stringify(data), res.ok)
-    } catch(err) { addLog(path + ' ERROR: ' + err.message, false) }
+      addLog(path + ' \u2014 ' + JSON.stringify(data), res.ok ? 'success' : 'error')
+    } catch(err) {
+      addLog(path + ' \u2014 ERROR: ' + err.message, 'error')
+    }
+    setRunning(null)
   }
 
-  async function fetchDateRange() {
-    if (!fetchFrom) { addLog('Select a start date.', false); return }
-    const to = fetchTo || fetchFrom
-    addLog('Fetching fixtures ' + fetchFrom + ' to ' + to + '...', null)
+  async function runStandingsThenScore() {
+    setRunning('Standings + Score')
+    addLog('Running Standings then Score...')
     try {
-      const res = await fetch('/api/admin/fetch-range?from=' + fetchFrom + '&to=' + to, { headers: H })
-      const data = await res.json()
-      if (data.ok) {
-        addLog('Fetched ' + data.inserted + ' fixtures from ' + data.dateFrom + ' to ' + data.dateTo + '. Now run Score then Cache.', true)
-      } else {
-        addLog('Error: ' + (data.error || JSON.stringify(data)), false)
-      }
-    } catch(err) { addLog('Fetch error: ' + err.message, false) }
+      const r1 = await fetch('/api/cron/standings', { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
+      const d1 = await r1.json()
+      addLog('/api/cron/standings \u2014 ' + JSON.stringify(d1), r1.ok ? 'success' : 'error')
+      const r2 = await fetch('/api/cron/score', { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
+      const d2 = await r2.json()
+      addLog('/api/cron/score \u2014 ' + JSON.stringify(d2), r2.ok ? 'success' : 'error')
+    } catch(err) { addLog('ERROR: ' + err.message, 'error') }
+    setRunning(null)
   }
 
   async function grantAccess(action) {
-    if (!giftEmail) { setGiftMsg('Enter an email address.'); return }
+    if (!giftEmail) { setGiftMsg('Email required'); return }
     try {
-      const res = await fetch('/api/admin/gifted-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: giftEmail, action, expires_at: giftExpiry || null }) })
+      const res = await fetch('/api/admin/gifted-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + CRON_SECRET },
+        body: JSON.stringify({ email: giftEmail, action, expires_at: giftExpiry || null })
+      })
       const data = await res.json()
-      setGiftMsg(data.message || data.error)
-    } catch(err) { setGiftMsg(err.message) }
+      setGiftMsg(data.ok ? action + ' successful for ' + giftEmail : 'Error: ' + data.error)
+    } catch(err) { setGiftMsg('Error: ' + err.message) }
   }
 
-  async function generatePost() {
-    if (!fixtureId || !selection || !oddsFrac) { addLog('Fill in fixture ID, selection and odds.', false); return }
-    addLog('Generating post for ' + socialPersona + '...', null)
+  async function fetchByDateRange() {
+    if (!dateFrom || !dateTo) { setFetchMsg('Both dates required'); return }
+    setFetchMsg('Fetching...')
     try {
-      const res = await fetch('/api/admin/social/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ persona: socialPersona, fixtureId, market, selection, oddsFractional: oddsFrac, oddsDecimal: parseFloat(oddsDec) || 2.0, engineScore: parseInt(score) || 70, stake: 10 }) })
+      const res = await fetch('/api/admin/fetch-range?from=' + dateFrom + '&to=' + dateTo, {
+        headers: { Authorization: 'Bearer ' + CRON_SECRET }
+      })
       const data = await res.json()
-      if (data.ok) { setGeneratedPost(data.posts); setPostId(data.postId); addLog('Post generated. ID: ' + data.postId, true) }
-      else addLog('Error: ' + data.error, false)
-    } catch(err) { addLog(err.message, false) }
+      setFetchMsg(JSON.stringify(data))
+    } catch(err) { setFetchMsg('Error: ' + err.message) }
   }
 
-  async function logResult() {
-    if (!postId || !finalScore) { addLog('Enter post ID and final score.', false); return }
+  async function loadWeights() {
     try {
-      const res = await fetch('/api/admin/social/result', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId, outcome, finalScore }) })
-      const data = await res.json()
-      if (data.ok) addLog('Result logged. P+L: ' + data.profitLoss, true)
-      else addLog('Error: ' + data.error, false)
-    } catch(err) { addLog(err.message, false) }
+      const res = await fetch('/api/admin/weights', { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
+      setWeightData(await res.json())
+    } catch(err) { console.error(err) }
   }
 
-  const iS = { padding: '8px 10px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '4px', color: '#e8e8f0', fontSize: '16px', width: '100%' }
-  const btn = (col) => ({ padding: '8px 14px', background: col || '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '4px', color: col ? '#fff' : '#ccc', cursor: 'pointer', fontSize: '13px', fontWeight: 600 })
-  const sec = { background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '16px' }
+  async function reviewWeight(id, action, override) {
+    await fetch('/api/admin/weights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + CRON_SECRET },
+      body: JSON.stringify({ id, action, override_weight: override })
+    })
+    loadWeights()
+  }
 
-  if (!user) return <div style={{ padding: '40px 0', color: '#6b7280' }}>Loading...</div>
-  if (!isAdmin) return <div style={{ padding: '40px 0' }}><h1 style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444' }}>Access Denied</h1></div>
+  if (!user || user.email !== ADMIN_EMAIL) {
+    return <div style={{ padding: '40px', color: '#6b7280', textAlign: 'center' }}>Access restricted.</div>
+  }
+
+  const btnStyle = (active) => ({
+    padding: '8px 16px', background: active ? '#0F6E56' : '#1c1c28',
+    color: '#fff', border: '1px solid ' + (active ? '#0F6E56' : '#2a2a3a'),
+    borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600
+  })
+
+  const logColour = (type) => type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#9ca3af'
 
   return (
     <div style={{ paddingBottom: '60px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>Admin Panel</h1>
+      <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Admin Panel</h1>
 
-      <div style={sec}>
-        <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '16px' }}>Cron Controls</h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {[['/api/cron','Fetch Today+Tomorrow'],['/api/cron/injuries','Injuries'],['/api/cron/score','Score'],['/api/cron/projected','Projected'],['/api/cron/lineups','Lineups'],['/api/cron/bench-impact','Bench Impact'],['/api/cron/cache','Cache'],['/api/personas','Personas'],['/api/cron/live','Live'],['/api/cron/settle','Settle'],['/api/cron/rollup','Rollup'],['/api/cron/midnight','Midnight Chain']].map(([path, label]) => (
-            <button key={path} onClick={() => cronCall(path)} style={btn()}>{label}</button>
-          ))}
-        </div>
+      {/* Section tabs */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        {[['crons','Cron Controls'],['gifted','Gifted Access'],['daterange','Date Range Fetch'],['weights','Weight Adaptations']].map(([key,label]) => (
+          <button key={key} onClick={() => setActiveSection(key)} style={btnStyle(activeSection === key)}>{label}</button>
+        ))}
       </div>
 
-      <div style={sec}>
-        <h2 style={{ fontWeight: 700, marginBottom: '6px', fontSize: '16px' }}>Fetch Fixtures by Date Range</h2>
-        <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '14px' }}>Pulls from football-data.org — no date restrictions. Use for weekend fixtures. Then run Score and Cache.</p>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px', alignItems: 'flex-end' }}>
-          <div style={{ flex: '1 1 140px' }}>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>From</div>
-            <input style={iS} type='date' value={fetchFrom} onChange={e => setFetchFrom(e.target.value)} />
+      {/* CRON CONTROLS */}
+      {activeSection === 'crons' && (
+        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+          <div style={{ fontWeight: 700, marginBottom: '6px' }}>Cron Controls</div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Run Standings first, then Score. Order matters.</div>
+
+          {/* Quick action - standings + score together */}
+          <div style={{ marginBottom: '16px', padding: '12px', background: '#1c1c28', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '13px', color: '#22c55e' }}>Standings + Score (recommended)</div>
+              <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>Fetches all league tables then runs engine on all fixtures in one click</div>
+            </div>
+            <button onClick={runStandingsThenScore} disabled={!!running} style={{ padding: '8px 20px', background: '#22c55e', color: '#0a0a0f', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '13px', cursor: running ? 'not-allowed' : 'pointer', opacity: running ? 0.6 : 1 }}>
+              {running === 'Standings + Score' ? 'Running...' : 'Run Both \u2192'}
+            </button>
           </div>
-          <div style={{ flex: '1 1 140px' }}>
-            <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>To</div>
-            <input style={iS} type='date' value={fetchTo} onChange={e => setFetchTo(e.target.value)} />
-          </div>
-          <button onClick={fetchDateRange} style={btn('#185FA5')}>Fetch Fixtures</button>
-        </div>
-      </div>
 
-      <div style={sec}>
-        <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '16px' }}>Gifted Access</h2>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          <input style={{ ...iS, flex: '1 1 200px' }} placeholder='user@email.com' value={giftEmail} onChange={e => setGiftEmail(e.target.value)} />
-          <input style={{ ...iS, flex: '1 1 150px' }} type='date' value={giftExpiry} onChange={e => setGiftExpiry(e.target.value)} />
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => grantAccess('grant')} style={btn('#0F6E56')}>Grant Edge Access</button>
-          <button onClick={() => grantAccess('revoke')} style={btn('#ef4444')}>Revoke Access</button>
-        </div>
-        {giftMsg && <div style={{ marginTop: '10px', fontSize: '13px', color: '#9ca3af' }}>{giftMsg}</div>}
-      </div>
-
-      <div style={sec}>
-        <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '16px' }}>Social Tool — Generate Post</h2>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          <select style={{ ...iS, flex: '1 1 120px' }} value={socialPersona} onChange={e => setSocialPersona(e.target.value)}>
-            <option value='gordon'>Gaffer Gordon</option>
-            <option value='stan'>Stats Stan</option>
-            <option value='pez'>Punter Pez</option>
-          </select>
-          <input style={{ ...iS, flex: '1 1 120px' }} placeholder='Fixture ID' value={fixtureId} onChange={e => setFixtureId(e.target.value)} />
-          <select style={{ ...iS, flex: '1 1 140px' }} value={market} onChange={e => setMarket(e.target.value)}>
-            <option value='match_result'>Match Result</option>
-            <option value='btts'>BTTS</option>
-            <option value='over_25'>Over 2.5</option>
-            <option value='anytime_scorer'>Anytime Scorer</option>
-            <option value='cards'>Cards</option>
-          </select>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          <input style={{ ...iS, flex: '2 1 200px' }} placeholder='Selection (e.g. Arsenal Win)' value={selection} onChange={e => setSelection(e.target.value)} />
-          <input style={{ ...iS, flex: '1 1 80px' }} placeholder='Odds frac' value={oddsFrac} onChange={e => setOddsFrac(e.target.value)} />
-          <input style={{ ...iS, flex: '1 1 80px' }} placeholder='Odds dec' value={oddsDec} onChange={e => setOddsDec(e.target.value)} />
-          <input style={{ ...iS, flex: '1 1 80px' }} placeholder='Score' value={score} onChange={e => setScore(e.target.value)} />
-        </div>
-        <button onClick={generatePost} style={btn('#185FA5')}>Generate Post</button>
-        {generatedPost && (
-          <div style={{ marginTop: '14px' }}>
-            {[['Twitter/X', generatedPost.short],['Bluesky', generatedPost.bluesky],['Reddit', generatedPost.long],['Facebook', generatedPost.fb]].map(([platform, text]) => (
-              <div key={platform} style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px', fontWeight: 600 }}>{platform}</div>
-                <textarea readOnly value={text} style={{ ...iS, height: '80px', resize: 'vertical', fontSize: '12px', fontFamily: 'monospace' }} />
-                <button onClick={() => navigator.clipboard.writeText(text)} style={{ ...btn(), fontSize: '11px', padding: '4px 10px', marginTop: '2px' }}>Copy</button>
+          {/* Individual buttons */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {CRON_BUTTONS.map(btn => (
+              <div key={btn.label} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => runCron(btn.path, btn.label)}
+                  disabled={!!running}
+                  title={btn.desc}
+                  style={{ padding: '8px 16px', background: running === btn.label ? '#0F6E56' : '#1c1c28', color: '#fff', border: '1px solid #2a2a3a', borderRadius: '6px', cursor: running ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: running && running !== btn.label ? 0.5 : 1 }}
+                >
+                  {running === btn.label ? 'Running...' : btn.label}
+                </button>
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      <div style={sec}>
-        <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '16px' }}>Social Tool — Log Result</h2>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-          <input style={{ ...iS, flex: '2 1 200px' }} placeholder='Post ID' value={postId} onChange={e => setPostId(e.target.value)} />
-          <input style={{ ...iS, flex: '1 1 80px' }} placeholder='Score e.g. 2-1' value={finalScore} onChange={e => setFinalScore(e.target.value)} />
-          <select style={{ ...iS, flex: '1 1 100px' }} value={outcome} onChange={e => setOutcome(e.target.value)}>
-            <option value='win'>Win</option>
-            <option value='loss'>Loss</option>
-            <option value='void'>Void</option>
-          </select>
         </div>
-        <button onClick={logResult} style={btn('#0F6E56')}>Log Result</button>
-      </div>
+      )}
 
-      <div style={sec}>
-        <h2 style={{ fontWeight: 700, marginBottom: '14px', fontSize: '16px' }}>Activity Log</h2>
-        <div style={{ fontFamily: 'monospace', fontSize: '12px', maxHeight: '300px', overflowY: 'auto' }}>
-          {log.length === 0 && <div style={{ color: '#4b5563' }}>No activity yet.</div>}
-          {log.map((l, i) => (
-            <div key={i} style={{ color: l.ok === true ? '#22c55e' : l.ok === false ? '#ef4444' : '#9ca3af', marginBottom: '4px' }}>
-              [{l.ts}] {l.msg}
+      {/* GIFTED ACCESS */}
+      {activeSection === 'gifted' && (
+        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+          <div style={{ fontWeight: 700, marginBottom: '16px' }}>Gifted Access</div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+            <input value={giftEmail} onChange={e => setGiftEmail(e.target.value)} placeholder='user@email.com' style={{ flex: 2, minWidth: '200px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <input type='date' value={giftExpiry} onChange={e => setGiftExpiry(e.target.value)} style={{ flex: 1, minWidth: '140px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => grantAccess('grant')} style={{ padding: '8px 20px', background: '#0F6E56', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Grant Edge</button>
+            <button onClick={() => grantAccess('revoke')} style={{ padding: '8px 20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Revoke</button>
+          </div>
+          {giftMsg && <div style={{ marginTop: '10px', fontSize: '13px', color: '#9ca3af' }}>{giftMsg}</div>}
+        </div>
+      )}
+
+      {/* DATE RANGE FETCH */}
+      {activeSection === 'daterange' && (
+        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+          <div style={{ fontWeight: 700, marginBottom: '6px' }}>Fetch Fixtures by Date Range</div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Backfill fixtures for a specific date range.</div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+            <input type='date' value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <input type='date' value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <button onClick={fetchByDateRange} style={{ padding: '8px 20px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Fetch</button>
+          </div>
+          {fetchMsg && <div style={{ fontSize: '12px', color: '#9ca3af', fontFamily: 'monospace' }}>{fetchMsg}</div>}
+        </div>
+      )}
+
+      {/* WEIGHT ADAPTATIONS */}
+      {activeSection === 'weights' && (
+        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+          <div style={{ fontWeight: 700, marginBottom: '6px' }}>Weight Adaptations</div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Generated weekly by calibration cron. Approve, override or reject each suggestion.</div>
+          {!weightData ? <div style={{ color: '#6b7280' }}>Loading...</div> :
+           weightData.pending?.length === 0 ? <div style={{ color: '#6b7280', fontSize: '13px' }}>No pending suggestions. Run Calibrate to generate new ones.</div> :
+           weightData.pending?.map(w => (
+            <div key={w.id} style={{ background: '#1c1c28', borderRadius: '6px', padding: '14px', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: '#e8e8f0' }}>{w.league_name}</span>
+                  <span style={{ color: '#6b7280', margin: '0 8px' }}>\u2014</span>
+                  <span style={{ color: '#9ca3af' }}>{w.factor_name}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', fontSize: '12px' }}>
+                  <span style={{ color: '#6b7280' }}>Current: <b style={{ color: '#e8e8f0' }}>{(w.current_weight * 100).toFixed(1)}%</b></span>
+                  <span style={{ color: '#6b7280' }}>\u2192 Suggested: <b style={{ color: '#22c55e' }}>{(w.suggested_weight * 100).toFixed(1)}%</b></span>
+                  <span style={{ color: '#6b7280' }}>({w.sample_size} matches)</span>
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '10px' }}>{w.reasoning}</div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button onClick={() => reviewWeight(w.id, 'approve', null)} style={{ padding: '5px 14px', background: '#0F6E56', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Approve</button>
+                <button onClick={() => reviewWeight(w.id, 'reject', null)} style={{ padding: '5px 14px', background: '#ef444420', color: '#ef4444', border: '1px solid #ef444440', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Reject</button>
+                <input placeholder='Override %' style={{ width: '90px', padding: '5px 8px', background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '4px', color: '#fff', fontSize: '12px' }}
+                  onKeyDown={e => { if (e.key === 'Enter') reviewWeight(w.id, 'override', parseFloat(e.target.value) / 100) }}
+                />
+              </div>
             </div>
           ))}
+          {/* League accuracy stats */}
+          {weightData?.leagueStats && Object.keys(weightData.leagueStats).length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: '#9ca3af' }}>PREDICTION ACCURACY BY LEAGUE</div>
+              {Object.entries(weightData.leagueStats).map(([league, stats]) => (
+                <div key={league} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #1c1c28', fontSize: '13px' }}>
+                  <span>{league}</span>
+                  <span style={{ color: stats.correct / stats.total > 0.6 ? '#22c55e' : '#9ca3af' }}>
+                    {stats.correct}/{stats.total} ({Math.round(stats.correct / stats.total * 100)}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {log.length > 0 && <button onClick={() => setLog([])} style={{ ...btn(), marginTop: '10px', fontSize: '11px' }}>Clear Log</button>}
+      )}
+
+      {/* ACTIVITY LOG */}
+      <div style={{ background: '#0d0d14', border: '1px solid #1c1c28', borderRadius: '8px', padding: '16px' }}>
+        <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: '#6b7280' }}>ACTIVITY LOG</div>
+        {log.length === 0 ? <div style={{ color: '#374151', fontSize: '12px' }}>No activity yet. Run a cron above.</div> :
+          [...log].reverse().map((entry, i) => (
+            <div key={i} style={{ fontFamily: 'monospace', fontSize: '11px', color: logColour(entry.type), padding: '3px 0', borderBottom: '1px solid #111' }}>
+              [{entry.ts}] {entry.msg}
+            </div>
+          ))
+        }
       </div>
     </div>
   )
