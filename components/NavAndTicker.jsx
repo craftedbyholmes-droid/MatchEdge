@@ -3,11 +3,14 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePlan } from '@/lib/usePlan'
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL
+
 export default function NavAndTicker() {
   const [isMobile, setIsMobile] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [ticker, setTicker] = useState([])
-  const { plan } = usePlan()
+  const { plan, user } = usePlan()
+  const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 768)
@@ -41,14 +44,14 @@ export default function NavAndTicker() {
           ) : (
             <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
               {links.map(l => <Link key={l.href} href={l.href} style={{ color: l.highlight ? '#f0c040' : '#ccc', fontSize: '13px', fontWeight: l.highlight ? 700 : 400 }}>{l.label}</Link>)}
-              {plan === 'edge' && <Link href='/admin' style={{ color: '#f0c040', fontSize: '13px', fontWeight: 600 }}>Admin</Link>}
+              {isAdmin && <Link href='/admin' style={{ color: '#f0c040', fontSize: '13px', fontWeight: 600 }}>Admin</Link>}
             </div>
           )}
         </div>
         {isMobile && menuOpen && (
           <div style={{ background: '#0d0d14', borderTop: '1px solid #2a2a3a', padding: '12px 0' }}>
             {links.map(l => <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: l.highlight ? '#f0c040' : '#ccc', fontWeight: l.highlight ? 700 : 400 }}>{l.label}</Link>)}
-            {plan === 'edge' && <Link href='/admin' onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: '#f0c040' }}>Admin</Link>}
+            {isAdmin && <Link href='/admin' onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: '#f0c040' }}>Admin</Link>}
           </div>
         )}
       </nav>

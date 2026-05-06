@@ -23,13 +23,14 @@ export default function PricingPage() {
         'Top 1 pick of the day',
         'Bookmaker links',
         'Results ticker',
-        'Landing page access'
+        'World Cup page access'
       ],
       missing: [
         'All matches and scores',
         'Full tipster picks',
         'Results history',
-        'Tomorrow preview'
+        'Upcoming fixtures',
+        'Competitions browser'
       ],
       cta: user ? 'Current Plan' : 'Get Started',
       ctaHref: user ? null : '/join',
@@ -44,17 +45,17 @@ export default function PricingPage() {
       features: [
         'All matches grouped by league',
         'Top 2 runners per match',
-        'Paginated top picks (70+)',
+        'Paginated top picks',
         'Last 30 days results history',
-        'Tipster picks visible',
-        'Tomorrow preview',
-        'Momentum gauge'
+        'All tipster picks visible',
+        'Tomorrow and upcoming fixtures',
+        'Competitions browser — all 30+ competitions',
+        'World Cup tipster picks'
       ],
       missing: [
         'Live refresh button',
         'Full results history',
-        'Bench Impact flags',
-        'Admin panel'
+        'Bench Impact flags'
       ],
       cta: plan === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
       ctaHref: null,
@@ -73,8 +74,9 @@ export default function PricingPage() {
         'Full results history',
         'Bench Impact flags',
         'Score history sparklines',
-        'All tipster picks and history',
-        'Admin panel access'
+        'All tipster picks and full history',
+        'Player and block pitch analysis',
+        'Engine weight transparency'
       ],
       missing: [],
       cta: plan === 'edge' ? 'Current Plan' : 'Upgrade to Edge',
@@ -102,9 +104,7 @@ export default function PricingPage() {
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {plans.map(p => (
           <div key={p.id} style={{ flex: '1 1 260px', background: '#13131a', border: '1px solid ' + p.colour + '40', borderRadius: '10px', padding: '24px', position: 'relative' }}>
-            {p.badge && (
-              <div style={{ position: 'absolute', top: '-10px', right: '16px', background: p.colour, color: '#0a0a0f', fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '20px' }}>{p.badge}</div>
-            )}
+            {p.badge && <div style={{ position: 'absolute', top: '-10px', right: '16px', background: p.colour, color: '#0a0a0f', fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '20px' }}>{p.badge}</div>}
             <div style={{ color: p.colour, fontWeight: 800, fontSize: '18px', marginBottom: '4px' }}>{p.name}</div>
             <div style={{ fontSize: '28px', fontWeight: 800, marginBottom: '2px' }}>{p.price}</div>
             <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '20px' }}>{p.period}</div>
