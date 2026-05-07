@@ -57,7 +57,7 @@ export default function TipstersPage() {
         <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F6E56', marginBottom: '6px' }}>When do picks go up?</div>
         <div style={{ fontSize: '13px', color: '#9ca3af', lineHeight: '1.6' }}>
           Gordon, Stan and Pez publish selections for the next matchday automatically.
-          Picks appear here as soon as the next day\u0027s fixtures are scored \u2014 often the evening before.
+          Picks appear here as soon as the next day's fixtures are scored - often the evening before.
           The earlier you check, the better the odds available.
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function TipstersPage() {
               <div style={{ color: '#9ca3af', fontSize: '12px', marginBottom: '12px' }}>{meta.bio}</div>
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div><div style={{ fontSize: '11px', color: '#6b7280' }}>W/Total ({wr}%)</div></div>
-                <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}\u00a3{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: '#6b7280' }}>Season P+L</div></div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: '#6b7280' }}>Season P+L</div></div>
               </div>
             </div>
           )
@@ -89,7 +89,7 @@ export default function TipstersPage() {
           {/* Picks section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>
-              {pickDate ? formatPickDate(pickDate) + '\u0027s Picks' : 'Today\u0027s Picks'}
+              {pickDate ? formatPickDate(pickDate) + ''s Picks' : 'Today's Picks'}
             </h2>
             {pickDate && pickDate !== today && (
               <span style={{ fontSize: '11px', background: '#f0c04020', color: '#f0c040', border: '1px solid #f0c04040', padding: '2px 10px', borderRadius: '10px', fontWeight: 700 }}>
@@ -101,7 +101,7 @@ export default function TipstersPage() {
           {picks.length === 0 ? (
             <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '24px', textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '6px' }}>No picks generated yet</div>
-              <div style={{ fontSize: '12px', color: '#4b5563' }}>Picks are generated automatically when the next matchday\u0027s fixtures are scored.</div>
+              <div style={{ fontSize: '12px', color: '#4b5563' }}>Picks are generated automatically when the next matchday's fixtures are scored.</div>
             </div>
           ) : (
             <div style={{ marginBottom: '24px' }}>
@@ -116,9 +116,9 @@ export default function TipstersPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             {pick.is_best_pick && <span style={{ fontSize: '10px', background: '#f0c04020', color: '#f0c040', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>BEST PICK</span>}
-                            <span style={{ fontSize: '12px', color: '#6b7280' }}>Score: {pick.engine_score} \u2014 Gap: {pick.score_gap}pts</span>
+                            <span style={{ fontSize: '12px', color: '#6b7280' }}>Score: {pick.engine_score} - Gap: {pick.score_gap}pts</span>
                           </div>
-                          <span style={{ fontSize: '12px', color: '#4b5563' }}>Stake: \u00a3{pick.stake}</span>
+                          <span style={{ fontSize: '12px', color: '#4b5563' }}>Stake: £{pick.stake}</span>
                         </div>
                         <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>
                           {pick.selection}
@@ -149,11 +149,11 @@ export default function TipstersPage() {
               <div key={pick.pick_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#13131a', borderRadius: '6px', marginBottom: '6px' }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '13px' }}>{pick.selection}</div>
-                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{pick.pick_date} \u2014 {pick.odds_fractional}</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{pick.pick_date} - {pick.odds_fractional}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: outcomeColour(pick.outcome) }}>{outcomeLabel(pick.outcome)}</div>
-                  <div style={{ fontSize: '11px', color: plColour(pick.profit_loss), marginTop: '2px' }}>{pick.profit_loss >= 0 ? '+' : ''}\u00a3{Number(pick.profit_loss || 0).toFixed(2)}</div>
+                  <div style={{ fontSize: '11px', color: plColour(pick.profit_loss), marginTop: '2px' }}>{pick.profit_loss >= 0 ? '+' : ''}£{Number(pick.profit_loss || 0).toFixed(2)}</div>
                 </div>
               </div>
             ))
