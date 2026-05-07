@@ -57,7 +57,7 @@ export default function TipstersPage() {
         <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F6E56', marginBottom: '6px' }}>When do picks go up?</div>
         <div style={{ fontSize: '13px', color: '#9ca3af', lineHeight: '1.6' }}>
           Gordon, Stan and Pez publish selections for the next matchday automatically.
-          Picks appear here as soon as the next day's fixtures are scored - often the evening before.
+          Picks appear here as soon as the next day fixtures are scored - often the evening before.
           The earlier you check, the better the odds available.
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function TipstersPage() {
           {/* Picks section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>
-              {pickDate ? formatPickDate(pickDate) + ''s Picks' : 'Today's Picks'}
+              {pickDate ? formatPickDate(pickDate) + "'s Picks" : "Today's Picks"}
             </h2>
             {pickDate && pickDate !== today && (
               <span style={{ fontSize: '11px', background: '#f0c04020', color: '#f0c040', border: '1px solid #f0c04040', padding: '2px 10px', borderRadius: '10px', fontWeight: 700 }}>
@@ -101,7 +101,7 @@ export default function TipstersPage() {
           {picks.length === 0 ? (
             <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '24px', textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '6px' }}>No picks generated yet</div>
-              <div style={{ fontSize: '12px', color: '#4b5563' }}>Picks are generated automatically when the next matchday's fixtures are scored.</div>
+              <div style={{ fontSize: '12px', color: '#4b5563' }}>Picks are generated automatically when the next matchday fixtures are scored.</div>
             </div>
           ) : (
             <div style={{ marginBottom: '24px' }}>
