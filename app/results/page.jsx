@@ -1,4 +1,5 @@
 'use client'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
 import PlanGate from '@/components/PlanGate'
@@ -54,7 +55,7 @@ export default function ResultsPage() {
 
       {tab === 'model' && (
         plan === 'free' ? <PlanGate requiredPlan='pro' currentPlan={plan}><div /></PlanGate> : (
-          loading ? <div style={{ color: '#6b7280', padding: '40px 0', textAlign: 'center' }}>Loading...</div> :
+          loading ? <LoadingSpinner /> :
           dates.length === 0 ? <div style={{ color: '#6b7280', padding: '40px 0', textAlign: 'center' }}>No results yet. Check back after the first settled picks.</div> : (
             dates.map(date => (
               <div key={date} style={{ marginBottom: '16px' }}>

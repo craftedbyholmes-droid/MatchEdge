@@ -1,4 +1,5 @@
 'use client'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
 import PlanGate from '@/components/PlanGate'
@@ -69,7 +70,7 @@ export default function DashboardPage() {
       )}
 
       {loading ? (
-        <div style={{ color: '#6b7280', padding: '40px 0', textAlign: 'center' }}>Loading matches...</div>
+        <LoadingSpinner />
       ) : matches.length === 0 ? (
         <div style={{ color: '#6b7280', padding: '40px 0', textAlign: 'center' }}>No matches scheduled today.</div>
       ) : (

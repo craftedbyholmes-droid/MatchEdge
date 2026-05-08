@@ -1,4 +1,5 @@
 'use client'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { COMPETITIONS, COUNTRY_LABELS } from '@/lib/competitions'

@@ -1,4 +1,5 @@
 'use client'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
 import PlanGate from '@/components/PlanGate'
@@ -142,7 +143,7 @@ export default function TipstersPage() {
               </button>
             ))}
           </div>
-          {loading ? <div style={{ color: '#6b7280' }}>Loading...</div> : getHistory(activeTab).length === 0 ? (
+          {loading ? <LoadingSpinner /> : getHistory(activeTab).length === 0 ? (
             <div style={{ color: '#6b7280', fontSize: '14px' }}>No settled picks yet. History builds after each matchday settles.</div>
           ) : (
             getHistory(activeTab).map(pick => (

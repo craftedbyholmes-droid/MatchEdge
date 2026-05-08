@@ -1,4 +1,5 @@
 'use client'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
 import PlanGate from '@/components/PlanGate'
@@ -165,7 +166,7 @@ export default function UpcomingPage() {
               )
             })}
           </div>
-          {loading ? <div style={{ color: '#6b7280', padding: '40px 0', textAlign: 'center' }}>Loading...</div> : byLeague[activeLeague]?.length === 0 ? (
+          {loading ? <LoadingSpinner /> : byLeague[activeLeague]?.length === 0 ? (
             <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
               <div style={{ color: '#6b7280', fontSize: '14px', marginBottom: '6px' }}>No upcoming fixtures for {LEAGUE_META[activeLeague]?.label}.</div>
               <div style={{ color: '#4b5563', fontSize: '12px' }}>Use the Admin panel to fetch fixtures.</div>
