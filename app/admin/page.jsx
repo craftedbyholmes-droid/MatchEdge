@@ -8,14 +8,14 @@ const CRON_SECRET = process.env.NEXT_PUBLIC_CRON_SECRET
 
 const CRON_BUTTONS = [
   { label: 'Fetch Fixtures',  path: '/api/cron',              desc: 'Pull all upcoming fixtures from SoccerData' },
-  { label: 'Standings',       path: '/api/cron/standings',    desc: 'Fetch all league tables — run before Score' },
+  { label: 'Standings',       path: '/api/cron/standings',    desc: 'Fetch all league tables - run before Score' },
   { label: 'Injuries',        path: '/api/cron/injuries',     desc: 'Update sidelined and injury data' },
   { label: 'Score',           path: '/api/cron/score',        desc: 'Run engine on all upcoming fixtures' },
   { label: 'Projected',       path: '/api/cron/projected',    desc: 'Advance score state for projected lineups' },
   { label: 'Lineups',         path: '/api/cron/lineups',      desc: 'Poll for confirmed lineups' },
   { label: 'Bench Impact',    path: '/api/cron/bench-impact', desc: 'Calculate bench impact flags' },
   { label: 'Cache',           path: '/api/cron/cache',        desc: 'Rebuild matches_today cache' },
-  { label: 'Personas',        path: '/api/personas',          desc: 'Generate tipster picks for today' },
+  { label: 'Personas',        path: '/api/personas',          desc: 'Generate tipster picks for next matchday' },
   { label: 'Live',            path: '/api/cron/live',         desc: 'Update live scores' },
   { label: 'Settle',          path: '/api/cron/settle',       desc: 'Settle picks and update P&L' },
   { label: 'Rollup',          path: '/api/cron/rollup',       desc: 'Write match events to player stats' },
@@ -24,7 +24,7 @@ const CRON_BUTTONS = [
 ]
 
 export default function AdminPage() {
-  const { user, plan } = usePlan()
+  const { user } = usePlan()
   const router = useRouter()
   const [log, setLog] = useState([])
   const [running, setRunning] = useState(null)
@@ -32,7 +32,7 @@ export default function AdminPage() {
   const [giftExpiry, setGiftExpiry] = useState('')
   const [giftMsg, setGiftMsg] = useState('')
   const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo]     = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [fetchMsg, setFetchMsg] = useState('')
   const [weightData, setWeightData] = useState(null)
   const [activeSection, setActiveSection] = useState('crons')
@@ -45,9 +45,9 @@ export default function AdminPage() {
     if (activeSection === 'weights') loadWeights()
   }, [activeSection])
 
-  function addLog(msg, type = 'info') {
+  function addLog(msg, type) {
     const ts = new Date().toLocaleTimeString('en-GB')
-    setLog(l => [...l.slice(-49), { ts, msg, type }])
+    setLog(l => [...l.slice(-49), { ts, msg, type: type || 'info' }])
   }
 
   async function runCron(path, label) {
@@ -56,9 +56,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(path, { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
       const data = await res.json()
-      addLog(path + ' \u2014 ' + JSON.stringify(data), res.ok ? 'success' : 'error')
+      addLog(path + ' -- ' + JSON.stringify(data), res.ok ? 'success' : 'error')
     } catch(err) {
-      addLog(path + ' \u2014 ERROR: ' + err.message, 'error')
+      addLog(path + ' -- ERROR: ' + err.message, 'error')
     }
     setRunning(null)
   }
@@ -69,10 +69,10 @@ export default function AdminPage() {
     try {
       const r1 = await fetch('/api/cron/standings', { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
       const d1 = await r1.json()
-      addLog('/api/cron/standings \u2014 ' + JSON.stringify(d1), r1.ok ? 'success' : 'error')
+      addLog('/api/cron/standings -- ' + JSON.stringify(d1), r1.ok ? 'success' : 'error')
       const r2 = await fetch('/api/cron/score', { headers: { Authorization: 'Bearer ' + CRON_SECRET } })
       const d2 = await r2.json()
-      addLog('/api/cron/score \u2014 ' + JSON.stringify(d2), r2.ok ? 'success' : 'error')
+      addLog('/api/cron/score -- ' + JSON.stringify(d2), r2.ok ? 'success' : 'error')
     } catch(err) { addLog('ERROR: ' + err.message, 'error') }
     setRunning(null)
   }
@@ -122,10 +122,15 @@ export default function AdminPage() {
     return <div style={{ padding: '40px', color: '#6b7280', textAlign: 'center' }}>Access restricted.</div>
   }
 
-  const btnStyle = (active) => ({
-    padding: '8px 16px', background: active ? '#0F6E56' : '#1c1c28',
-    color: '#fff', border: '1px solid ' + (active ? '#0F6E56' : '#2a2a3a'),
-    borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600
+  const tabStyle = (key) => ({
+    padding: '8px 18px',
+    background: activeSection === key ? '#0F6E56' : '#1c1c28',
+    color: '#fff',
+    border: '1px solid ' + (activeSection === key ? '#0F6E56' : '#2a2a3a'),
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: 600
   })
 
   const logColour = (type) => type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#9ca3af'
@@ -134,55 +139,45 @@ export default function AdminPage() {
     <div style={{ paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Admin Panel</h1>
 
-      {/* Section tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        {[['crons','Cron Controls'],['gifted','Gifted Access'],['daterange','Date Range Fetch'],['weights','Weight Adaptations']].map(([key,label]) => (
-          <button key={key} onClick={() => setActiveSection(key)} style={btnStyle(activeSection === key)}>{label}</button>
-        ))}
+        <button onClick={() => setActiveSection('crons')}    style={tabStyle('crons')}>Cron Controls</button>
+        <button onClick={() => setActiveSection('gifted')}   style={tabStyle('gifted')}>Gifted Access</button>
+        <button onClick={() => setActiveSection('daterange')}style={tabStyle('daterange')}>Date Range Fetch</button>
+        <button onClick={() => setActiveSection('weights')}  style={tabStyle('weights')}>Weight Adaptations</button>
       </div>
 
-      {/* CRON CONTROLS */}
       {activeSection === 'crons' && (
         <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-          <div style={{ fontWeight: 700, marginBottom: '6px' }}>Cron Controls</div>
+          <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>Cron Controls</div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Run Standings first, then Score. Order matters.</div>
-
-          {/* Quick action - standings + score together */}
-          <div style={{ marginBottom: '16px', padding: '12px', background: '#1c1c28', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#1c1c28', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', border: '1px solid #22c55e30' }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: '13px', color: '#22c55e' }}>Standings + Score (recommended)</div>
-              <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>Fetches all league tables then runs engine on all fixtures in one click</div>
+              <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>Fetches all league tables then runs engine on all fixtures</div>
             </div>
             <button onClick={runStandingsThenScore} disabled={!!running} style={{ padding: '8px 20px', background: '#22c55e', color: '#0a0a0f', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '13px', cursor: running ? 'not-allowed' : 'pointer', opacity: running ? 0.6 : 1 }}>
-              {running === 'Standings + Score' ? 'Running...' : 'Run Both \u2192'}
+              {running === 'Standings + Score' ? 'Running...' : 'Run Both'}
             </button>
           </div>
-
-          {/* Individual buttons */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {CRON_BUTTONS.map(btn => (
-              <div key={btn.label} style={{ position: 'relative' }}>
-                <button
-                  onClick={() => runCron(btn.path, btn.label)}
-                  disabled={!!running}
-                  title={btn.desc}
-                  style={{ padding: '8px 16px', background: running === btn.label ? '#0F6E56' : '#1c1c28', color: '#fff', border: '1px solid #2a2a3a', borderRadius: '6px', cursor: running ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: running && running !== btn.label ? 0.5 : 1 }}
-                >
-                  {running === btn.label ? 'Running...' : btn.label}
-                </button>
-              </div>
+              <button key={btn.label} onClick={() => runCron(btn.path, btn.label)} disabled={!!running} title={btn.desc}
+                style={{ padding: '8px 14px', background: running === btn.label ? '#0F6E56' : '#1c1c28', color: '#fff', border: '1px solid #2a2a3a', borderRadius: '6px', cursor: running ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: running && running !== btn.label ? 0.5 : 1 }}>
+                {running === btn.label ? 'Running...' : btn.label}
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* GIFTED ACCESS */}
       {activeSection === 'gifted' && (
         <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-          <div style={{ fontWeight: 700, marginBottom: '16px' }}>Gifted Access</div>
+          <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '16px' }}>Gifted Access</div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-            <input value={giftEmail} onChange={e => setGiftEmail(e.target.value)} placeholder='user@email.com' style={{ flex: 2, minWidth: '200px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
-            <input type='date' value={giftExpiry} onChange={e => setGiftExpiry(e.target.value)} style={{ flex: 1, minWidth: '140px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <input value={giftEmail} onChange={e => setGiftEmail(e.target.value)} placeholder='user@email.com'
+              style={{ flex: 2, minWidth: '200px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <input type='date' value={giftExpiry} onChange={e => setGiftExpiry(e.target.value)}
+              style={{ flex: 1, minWidth: '140px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button onClick={() => grantAccess('grant')} style={{ padding: '8px 20px', background: '#0F6E56', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Grant Edge</button>
@@ -192,39 +187,39 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* DATE RANGE FETCH */}
       {activeSection === 'daterange' && (
         <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-          <div style={{ fontWeight: 700, marginBottom: '6px' }}>Fetch Fixtures by Date Range</div>
+          <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>Fetch Fixtures by Date Range</div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Backfill fixtures for a specific date range.</div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-            <input type='date' value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
-            <input type='date' value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <input type='date' value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+            <input type='date' value={dateTo} onChange={e => setDateTo(e.target.value)}
+              style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
             <button onClick={fetchByDateRange} style={{ padding: '8px 20px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Fetch</button>
           </div>
-          {fetchMsg && <div style={{ fontSize: '12px', color: '#9ca3af', fontFamily: 'monospace' }}>{fetchMsg}</div>}
+          {fetchMsg && <div style={{ fontSize: '12px', color: '#9ca3af', fontFamily: 'monospace', wordBreak: 'break-all' }}>{fetchMsg}</div>}
         </div>
       )}
 
-      {/* WEIGHT ADAPTATIONS */}
       {activeSection === 'weights' && (
         <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-          <div style={{ fontWeight: 700, marginBottom: '6px' }}>Weight Adaptations</div>
+          <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>Weight Adaptations</div>
           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Generated weekly by calibration cron. Approve, override or reject each suggestion.</div>
-          {!weightData ? <div style={{ color: '#6b7280' }}>Loading...</div> :
-           weightData.pending?.length === 0 ? <div style={{ color: '#6b7280', fontSize: '13px' }}>No pending suggestions. Run Calibrate to generate new ones.</div> :
-           weightData.pending?.map(w => (
+          {!weightData ? <div style={{ color: '#6b7280' }}>Loading...</div>
+          : weightData.pending?.length === 0 ? <div style={{ color: '#6b7280', fontSize: '13px' }}>No pending suggestions. Run Calibrate to generate new ones.</div>
+          : weightData.pending?.map(w => (
             <div key={w.id} style={{ background: '#1c1c28', borderRadius: '6px', padding: '14px', marginBottom: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
                 <div>
-                  <span style={{ fontWeight: 700, color: '#e8e8f0' }}>{w.league_name}</span>
-                  <span style={{ color: '#6b7280', margin: '0 8px' }}>\u2014</span>
+                  <span style={{ fontWeight: 700 }}>{w.league_name}</span>
+                  <span style={{ color: '#6b7280', margin: '0 8px' }}>-</span>
                   <span style={{ color: '#9ca3af' }}>{w.factor_name}</span>
                 </div>
-                <div style={{ display: 'flex', gap: '6px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
                   <span style={{ color: '#6b7280' }}>Current: <b style={{ color: '#e8e8f0' }}>{(w.current_weight * 100).toFixed(1)}%</b></span>
-                  <span style={{ color: '#6b7280' }}>\u2192 Suggested: <b style={{ color: '#22c55e' }}>{(w.suggested_weight * 100).toFixed(1)}%</b></span>
-                  <span style={{ color: '#6b7280' }}>({w.sample_size} matches)</span>
+                  <span style={{ color: '#6b7280' }}>Suggested: <b style={{ color: '#22c55e' }}>{(w.suggested_weight * 100).toFixed(1)}%</b></span>
+                  <span style={{ color: '#4b5563' }}>({w.sample_size} matches)</span>
                 </div>
               </div>
               <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '10px' }}>{w.reasoning}</div>
@@ -232,12 +227,10 @@ export default function AdminPage() {
                 <button onClick={() => reviewWeight(w.id, 'approve', null)} style={{ padding: '5px 14px', background: '#0F6E56', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Approve</button>
                 <button onClick={() => reviewWeight(w.id, 'reject', null)} style={{ padding: '5px 14px', background: '#ef444420', color: '#ef4444', border: '1px solid #ef444440', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Reject</button>
                 <input placeholder='Override %' style={{ width: '90px', padding: '5px 8px', background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '4px', color: '#fff', fontSize: '12px' }}
-                  onKeyDown={e => { if (e.key === 'Enter') reviewWeight(w.id, 'override', parseFloat(e.target.value) / 100) }}
-                />
+                  onKeyDown={e => { if (e.key === 'Enter') reviewWeight(w.id, 'override', parseFloat(e.target.value) / 100) }} />
               </div>
             </div>
           ))}
-          {/* League accuracy stats */}
           {weightData?.leagueStats && Object.keys(weightData.leagueStats).length > 0 && (
             <div style={{ marginTop: '20px' }}>
               <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: '#9ca3af' }}>PREDICTION ACCURACY BY LEAGUE</div>
@@ -254,11 +247,11 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ACTIVITY LOG */}
       <div style={{ background: '#0d0d14', border: '1px solid #1c1c28', borderRadius: '8px', padding: '16px' }}>
         <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: '#6b7280' }}>ACTIVITY LOG</div>
-        {log.length === 0 ? <div style={{ color: '#374151', fontSize: '12px' }}>No activity yet. Run a cron above.</div> :
-          [...log].reverse().map((entry, i) => (
+        {log.length === 0
+          ? <div style={{ color: '#374151', fontSize: '12px' }}>No activity yet. Run a cron above.</div>
+          : [...log].reverse().map((entry, i) => (
             <div key={i} style={{ fontFamily: 'monospace', fontSize: '11px', color: logColour(entry.type), padding: '3px 0', borderBottom: '1px solid #111' }}>
               [{entry.ts}] {entry.msg}
             </div>
