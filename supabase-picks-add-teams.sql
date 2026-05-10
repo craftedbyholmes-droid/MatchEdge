@@ -1,0 +1,4 @@
+ALTER TABLE persona_picks ADD COLUMN IF NOT EXISTS home_team TEXT;
+ALTER TABLE persona_picks ADD COLUMN IF NOT EXISTS away_team TEXT;
+ALTER TABLE persona_picks ADD COLUMN IF NOT EXISTS league TEXT;
+ALTER TABLE persona_picks ADD COLUMN IF NOT EXISTS kickoff_time TIMESTAMPTZ;

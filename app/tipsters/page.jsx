@@ -1,14 +1,16 @@
 'use client'
-import LoadingSpinner from '@/components/LoadingSpinner'
 import { useState, useEffect } from 'react'
 import { usePlan } from '@/lib/usePlan'
 import PlanGate from '@/components/PlanGate'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 const PERSONA_META = {
-  gordon: { name: 'Gaffer Gordon', colour: '#0F6E56', market: 'Match Results',  bio: 'The ex-manager. Reads the game tactically. Trusts the unit scores.' },
+  gordon: { name: 'Gaffer Gordon', colour: '#0F6E56', market: 'Match Results',    bio: 'The ex-manager. Reads the game tactically. Trusts the unit scores.' },
   stan:   { name: 'Stats Stan',    colour: '#185FA5', market: 'BTTS / Over-Under', bio: 'The data obsessive. Lives for BTTS and over/under. Never watches the game.' },
-  pez:    { name: 'Punter Pez',    colour: '#993C1D', market: 'Player Props',   bio: 'The instinctive one. Player props, cards, goalscorers. High risk, high reward.' }
+  pez:    { name: 'Punter Pez',    colour: '#993C1D', market: 'Player Props',      bio: 'The instinctive one. Player props, cards, goalscorers. High risk, high reward.' }
 }
+
+const BOOKMAKERS = ['Bet365', 'William Hill', 'Ladbrokes', 'Coral', 'Paddy Power', 'Betfred']
 
 export default function TipstersPage() {
   const { plan } = usePlan()
@@ -42,6 +44,11 @@ export default function TipstersPage() {
     return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   }
 
+  function getMatchName(pick) {
+    if (pick.home_team && pick.away_team) return pick.home_team + ' vs ' + pick.away_team
+    return pick.fixture_id ? pick.fixture_id.replace('sd_', 'Match ') : 'Unknown match'
+  }
+
   function getStats(id) { return season.find(s => s.persona === id) || { wins: 0, total_picks: 0, profit_loss: 0 } }
   function getHistory(id) { return history.filter(h => h.persona === id) }
   function getPicks(id) { return picks.filter(p => p.persona === id) }
@@ -53,17 +60,15 @@ export default function TipstersPage() {
     <div style={{ paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Tipsters</h1>
 
-      {/* When do picks go up notice */}
       <div style={{ background: '#13131a', border: '1px solid #0F6E5660', borderRadius: '8px', padding: '14px 18px', marginBottom: '24px' }}>
         <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F6E56', marginBottom: '6px' }}>When do picks go up?</div>
         <div style={{ fontSize: '13px', color: '#9ca3af', lineHeight: '1.6' }}>
           Gordon, Stan and Pez publish selections for the next matchday automatically.
-          Picks appear here as soon as the next day fixtures are scored - often the evening before.
+          Picks appear as soon as the next day fixtures are scored - often the evening before.
           The earlier you check, the better the odds available.
         </div>
       </div>
 
-      {/* Persona summary cards */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
         {Object.entries(PERSONA_META).map(([id, meta]) => {
           const s = getStats(id)
@@ -87,15 +92,12 @@ export default function TipstersPage() {
         <PlanGate requiredPlan='pro' currentPlan={plan}><div /></PlanGate>
       ) : (
         <>
-          {/* Picks section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>
-              {pickDate ? formatPickDate(pickDate) + "'s Picks" : "Today's Picks"}
+              {pickDate ? formatPickDate(pickDate) + 's Picks' : 'Picks'}
             </h2>
             {pickDate && pickDate !== today && (
-              <span style={{ fontSize: '11px', background: '#f0c04020', color: '#f0c040', border: '1px solid #f0c04040', padding: '2px 10px', borderRadius: '10px', fontWeight: 700 }}>
-                EARLY PICKS
-              </span>
+              <span style={{ fontSize: '11px', background: '#f0c04020', color: '#f0c040', border: '1px solid #f0c04040', padding: '2px 10px', borderRadius: '10px', fontWeight: 700 }}>EARLY PICKS</span>
             )}
           </div>
 
@@ -110,22 +112,46 @@ export default function TipstersPage() {
                 const personaPicks = getPicks(id)
                 if (!personaPicks.length) return null
                 return (
-                  <div key={id} style={{ marginBottom: '16px' }}>
+                  <div key={id} style={{ marginBottom: '20px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: meta.colour, marginBottom: '8px', letterSpacing: '1px' }}>{meta.name.toUpperCase()}</div>
                     {personaPicks.map(pick => (
                       <div key={pick.pick_id} style={{ background: '#13131a', border: '1px solid ' + meta.colour + '30', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            {pick.is_best_pick && <span style={{ fontSize: '10px', background: '#f0c04020', color: '#f0c040', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>BEST PICK</span>}
-                            <span style={{ fontSize: '12px', color: '#6b7280' }}>Score: {pick.engine_score} - Gap: {pick.score_gap}pts</span>
+                        {/* Match name - most important line */}
+                        <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px', color: '#e8e8f0' }}>
+                          {getMatchName(pick)}
+                        </div>
+                        {/* League + kickoff */}
+                        {(pick.league || pick.kickoff_time) && (
+                          <div style={{ fontSize: '11px', color: '#4b5563', marginBottom: '8px' }}>
+                            {pick.league}{pick.kickoff_time ? ' - ' + new Date(pick.kickoff_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}
                           </div>
-                          <span style={{ fontSize: '12px', color: '#4b5563' }}>Stake: £{pick.stake}</span>
+                        )}
+                        {/* Selection + odds */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            {pick.is_best_pick && <span style={{ fontSize: '10px', background: '#f0c04020', color: '#f0c040', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>BEST PICK</span>}
+                            <span style={{ fontWeight: 600, color: '#e8e8f0' }}>{pick.selection}</span>
+                            <span style={{ color: '#22c55e', fontWeight: 700 }}>@ {pick.odds_fractional}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#6b7280' }}>
+                            <span>Score: {pick.engine_score}</span>
+                            <span>Gap: {pick.score_gap}pts</span>
+                            <span>Stake: £{pick.stake}</span>
+                          </div>
                         </div>
-                        <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>
-                          {pick.selection}
-                          <span style={{ color: '#9ca3af', fontWeight: 400, fontSize: '13px', marginLeft: '8px' }}>@ {pick.odds_fractional}</span>
+                        {/* AI tip */}
+                        {pick.tip_text && (
+                          <div style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic', marginBottom: '10px', paddingLeft: '8px', borderLeft: '2px solid ' + meta.colour + '40' }}>
+                            {pick.tip_text}
+                          </div>
+                        )}
+                        {/* Bookmaker links */}
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #1c1c28' }}>
+                          <span style={{ fontSize: '10px', color: '#4b5563', marginRight: '4px', lineHeight: '26px' }}>Bet with:</span>
+                          {BOOKMAKERS.map(bm => (
+                            <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#1c1c28', border: '1px solid #2a2a3a', color: '#9ca3af', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>{bm}</a>
+                          ))}
                         </div>
-                        {pick.tip_text && <div style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic', marginTop: '4px' }}>{pick.tip_text}</div>}
                       </div>
                     ))}
                   </div>
@@ -134,7 +160,6 @@ export default function TipstersPage() {
             </div>
           )}
 
-          {/* Pick history */}
           <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px' }}>Pick History</h2>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {Object.entries(PERSONA_META).map(([id, meta]) => (
@@ -143,18 +168,21 @@ export default function TipstersPage() {
               </button>
             ))}
           </div>
-          {loading ? <LoadingSpinner /> : getHistory(activeTab).length === 0 ? (
+          {loading ? <LoadingSpinner message='Loading history...' /> : getHistory(activeTab).length === 0 ? (
             <div style={{ color: '#6b7280', fontSize: '14px' }}>No settled picks yet. History builds after each matchday settles.</div>
           ) : (
             getHistory(activeTab).map(pick => (
-              <div key={pick.pick_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#13131a', borderRadius: '6px', marginBottom: '6px' }}>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '13px' }}>{pick.selection}</div>
-                  <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{pick.pick_date} - {pick.odds_fractional}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: outcomeColour(pick.outcome) }}>{outcomeLabel(pick.outcome)}</div>
-                  <div style={{ fontSize: '11px', color: plColour(pick.profit_loss), marginTop: '2px' }}>{pick.profit_loss >= 0 ? '+' : ''}£{Number(pick.profit_loss || 0).toFixed(2)}</div>
+              <div key={pick.pick_id} style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '6px', padding: '12px 14px', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '2px' }}>{getMatchName(pick)}</div>
+                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>{pick.selection} @ {pick.odds_fractional}</div>
+                    <div style={{ fontSize: '11px', color: '#4b5563', marginTop: '2px' }}>{pick.pick_date} - {pick.league || ''}</div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: outcomeColour(pick.outcome) }}>{outcomeLabel(pick.outcome)}</div>
+                    <div style={{ fontSize: '11px', color: plColour(pick.profit_loss), marginTop: '2px' }}>{pick.profit_loss >= 0 ? '+' : ''}£{Number(pick.profit_loss || 0).toFixed(2)}</div>
+                  </div>
                 </div>
               </div>
             ))

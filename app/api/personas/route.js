@@ -4,11 +4,11 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const PERSONAS = {
   gordon: { name: 'Gaffer Gordon', market: 'match_result', min_gap: 12, max_picks: 4, min_picks: 2, best_stake: 15, std_stake: 5,
-    voice: 'You are Gaffer Gordon, an ex-football manager. Authoritative, tactical, northern accent in text. Write a punchy 1-sentence tip about why this team will win based on the engine score gap. Max 120 chars.' },
-  stan: { name: 'Stats Stan', market: 'btts', min_gap: 0, max_picks: 5, min_picks: 2, best_stake: 10, std_stake: 5,
-    voice: 'You are Stats Stan, a data obsessive. Quick-fire, analytical. Write a 1-sentence BTTS tip based on combined attack scores. Max 120 chars.' },
-  pez: { name: 'Punter Pez', market: 'anytime_scorer', min_gap: 0, max_picks: 6, min_picks: 2, best_stake: 10, std_stake: 5,
-    voice: 'You are Punter Pez, enthusiastic punter from London/Essex. Write a 1-sentence player prop tip about the favourite team attackers. Max 120 chars.' }
+    voice: 'You are Gaffer Gordon, an ex-football manager. Authoritative, tactical, northern. Write a punchy 1-sentence tip for why this team wins. Max 100 chars. No hashtags.' },
+  stan:   { name: 'Stats Stan',    market: 'btts',         min_gap: 0,  max_picks: 4, min_picks: 2, best_stake: 10, std_stake: 5,
+    voice: 'You are Stats Stan, a data obsessive. Quick-fire, analytical. Write a 1-sentence BTTS tip based on both teams attacking scores. Max 100 chars. No hashtags.' },
+  pez:    { name: 'Punter Pez',    market: 'anytime_scorer', min_gap: 0, max_picks: 4, min_picks: 2, best_stake: 10, std_stake: 5,
+    voice: 'You are Punter Pez, enthusiastic London/Essex punter. Write a 1-sentence player prop tip naming the player and why they will score. Max 100 chars. No hashtags.' }
 }
 
 export async function GET(request) {
@@ -39,7 +39,7 @@ export async function GET(request) {
       .in('fixture_id', fixtureIds)
       .order('score_state', { ascending: false })
 
-    // Keep highest state score per fixture
+    // Keep highest score_state per fixture
     const bestScores = {}
     for (const score of (allScores || [])) {
       if (!bestScores[score.fixture_id] || score.score_state > bestScores[score.fixture_id].score_state) {
@@ -53,7 +53,6 @@ export async function GET(request) {
 
     if (!matches.length) return NextResponse.json({ ok: true, picks: 0, message: 'No scored fixtures for ' + firstMatchDate })
 
-    // Delete existing picks for this matchday
     await supabaseAdmin.from('persona_picks').delete().eq('pick_date', firstMatchDate)
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -66,38 +65,40 @@ export async function GET(request) {
         const awayScore = m.score.total_away
         const gap = Math.abs(homeScore - awayScore)
         const topScore = Math.max(homeScore, awayScore)
+        const combined = homeScore + awayScore
         const isFavHome = homeScore >= awayScore
         const favourite = isFavHome ? m.home_team : m.away_team
         let qualifies = false, selection = '', market = persona.market
+        let sortKey = 0
 
         if (personaId === 'gordon') {
           qualifies = gap >= persona.min_gap
           selection = favourite + ' Win'
+          sortKey = gap // sort by biggest gap
         } else if (personaId === 'stan') {
-          const combined = homeScore + awayScore
           qualifies = combined > 100
           selection = combined > 110 ? 'Over 2.5 Goals' : 'BTTS Yes'
           market = combined > 110 ? 'over_25' : 'btts'
+          sortKey = combined // sort by highest combined score
         } else if (personaId === 'pez') {
           const lineup = isFavHome ? (m.score.modifiers?.home_lineup || []) : (m.score.modifiers?.away_lineup || [])
           const attackers = lineup.filter(p => p.position === 'Attacker')
           qualifies = attackers.length > 0
           selection = attackers[0]?.player?.name ? attackers[0].player.name + ' Anytime Scorer' : favourite + ' Scorer'
           market = 'anytime_scorer'
+          sortKey = topScore // sort by highest engine score
         }
 
         if (!qualifies) return null
-        return { match: m, gap, topScore, favourite, selection, market, homeScore, awayScore, isFavHome }
+        return { match: m, gap, topScore, combined, favourite, selection, market, homeScore, awayScore, isFavHome, sortKey }
       }).filter(Boolean)
 
       if (candidates.length < persona.min_picks) continue
 
-      candidates.sort((a, b) => {
-        if (personaId === 'gordon') return b.gap - a.gap
-        if (personaId === 'stan') return (b.homeScore + b.awayScore) - (a.homeScore + a.awayScore)
-        return b.topScore - a.topScore
-      })
+      // Sort by the right key for each persona
+      candidates.sort((a, b) => b.sortKey - a.sortKey)
 
+      // Cap at max 4
       const picks = candidates.slice(0, persona.max_picks)
 
       for (let i = 0; i < picks.length; i++) {
@@ -106,20 +107,20 @@ export async function GET(request) {
         const isBest = i === 0
         const stake = isBest ? persona.best_stake : persona.std_stake
 
-        // Real odds from modifiers
+        // Real odds
         const odds = m.score.modifiers?.odds
         let oddsDecimal = 1.9
         if (personaId === 'gordon' && odds?.match_winner) {
           oddsDecimal = pick.isFavHome ? (odds.match_winner.home || 1.9) : (odds.match_winner.away || 1.9)
         } else if (personaId === 'stan' && odds?.over_under) {
-          oddsDecimal = odds.over_under.over || 1.9
+          oddsDecimal = odds.over_under.over || 1.85
         }
         const oddsFractional = decToFrac(oddsDecimal)
 
         // AI tip
         let tipText = ''
         try {
-          const prompt = m.home_team + ' vs ' + m.away_team + '. Engine: ' + Math.round(pick.homeScore) + ' vs ' + Math.round(pick.awayScore) + '. Pick: ' + pick.selection + '. Gap: ' + Math.round(pick.gap) + 'pts.'
+          const prompt = m.home_team + ' vs ' + m.away_team + ' (' + m.league + '). Engine: Home ' + Math.round(pick.homeScore) + ' vs Away ' + Math.round(pick.awayScore) + '. Pick: ' + pick.selection + '. Gap: ' + Math.round(pick.gap) + 'pts.'
           const msg = await anthropic.messages.create({
             model: 'claude-sonnet-4-20250514', max_tokens: 80,
             system: persona.voice,
@@ -128,7 +129,6 @@ export async function GET(request) {
           tipText = msg.content[0]?.text || ''
         } catch(err) { console.error('AI tip error:', err.message) }
 
-        // Only write columns that exist in the table
         const pickRow = {
           pick_id:         personaId + '_' + m.fixture_id + '_' + i + '_' + firstMatchDate,
           persona:         personaId,
@@ -148,20 +148,13 @@ export async function GET(request) {
         }
 
         const { error } = await supabaseAdmin.from('persona_picks').insert(pickRow)
-        if (error) {
-          console.error('Pick insert error:', error.message, JSON.stringify(pickRow))
-          errors.push(error.message)
-        } else {
-          totalPicks++
-        }
+        if (error) { console.error('Pick insert error:', error.message); errors.push(error.message) }
+        else totalPicks++
       }
     }
 
     return NextResponse.json({ ok: true, picks: totalPicks, errors: errors.length, matchday: firstMatchDate, fixtures_scored: matches.length })
-  } catch(err) {
-    console.error('Personas error:', err.message)
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+  } catch(err) { return NextResponse.json({ error: err.message }, { status: 500 }) }
 }
 
 function decToFrac(dec) {
