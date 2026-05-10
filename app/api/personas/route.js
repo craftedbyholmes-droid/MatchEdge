@@ -144,7 +144,11 @@ export async function GET(request) {
           tip_text:        tipText,
           pick_date:       firstMatchDate,
           outcome:         null,
-          profit_loss:     0
+          profit_loss:     0,
+          home_team:       m.home_team,
+          away_team:       m.away_team,
+          league:          m.league,
+          kickoff_time:    m.kickoff_time
         }
 
         const { error } = await supabaseAdmin.from('persona_picks').insert(pickRow)
