@@ -1,6 +1,14 @@
 'use client'
+import { useEffect } from 'react'
 
 export default function LoadingSpinner({ message = 'Loading...' }) {
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = '@keyframes me-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }'
+    document.head.appendChild(style)
+    return () => document.head.removeChild(style)
+  }, [])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', gap: '20px' }}>
       <div style={{ position: 'relative', width: '56px', height: '56px' }}>
@@ -16,7 +24,6 @@ export default function LoadingSpinner({ message = 'Loading...' }) {
         </div>
       </div>
       <div style={{ fontSize: '14px', color: '#6b7280' }}>{message}</div>
-      <style>{@keyframes me-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }}</style>
     </div>
   )
 }
