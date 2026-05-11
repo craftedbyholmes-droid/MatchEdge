@@ -16,50 +16,32 @@ export default function DashboardPage() {
   const [expanded, setExpanded] = useState({})
   const [refreshing, setRefreshing] = useState(false)
 
-  const today = new Date()
-  const dateLabel = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   function loadMatches() {
     fetch('/api/matches').then(r => r.json()).then(d => {
       setMatches(Array.isArray(d) ? d : [])
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false); setRefreshing(false)
     }).catch(() => { setLoading(false); setRefreshing(false) })
   }
-
   useEffect(() => { loadMatches() }, [])
   function toggle(id) { setExpanded(e => ({ ...e, [id]: !e[id] })) }
 
   const filtered = activeCategory === 'top_leagues'
     ? matches.filter(m => m.league === activeLeague)
     : matches
+  const sorted = [...filtered].sort((a, b) =>
+    Math.max(b.score?.total_home||0, b.score?.total_away||0) - Math.max(a.score?.total_home||0, a.score?.total_away||0)
+  )
+  const highConf = matches.filter(m => Math.max(m.score?.total_home||0, m.score?.total_away||0) >= 75).length
 
-  const sorted = [...filtered].sort((a, b) => {
-    const aS = Math.max(a.score?.total_home || 0, a.score?.total_away || 0)
-    const bS = Math.max(b.score?.total_home || 0, b.score?.total_away || 0)
-    return bS - aS
-  })
-
-  const highConf = matches.filter(m => Math.max(m.score?.total_home || 0, m.score?.total_away || 0) >= 75).length
-
-  function formatKO(kt) { if (!kt) return ''; return new Date(kt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }
-
+  function fmtKO(kt) { return kt ? new Date(kt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '' }
   function getBadge(score) {
     if (!score) return null
-    const t = Math.max(score.total_home || 0, score.total_away || 0)
+    const t = Math.max(score.total_home||0, score.total_away||0)
     if (t >= 80) return { label: 'BEST BET', colour: '#F0B90B' }
     if (t >= 75) return { label: 'HIGH CONF', colour: '#00C896' }
     return null
-  }
-
-  function getPrediction(match) {
-    if (!match.score) return null
-    const h = match.score.total_home || 0
-    const a = match.score.total_away || 0
-    const gap = Math.abs(h - a)
-    if (gap < 5) return { text: 'Too close to call', colour: '#F0B90B' }
-    const fav = h > a ? match.home_team : match.away_team
-    return { text: fav + ' favoured (' + Math.round(gap) + 'pt gap)', colour: '#00C896' }
   }
 
   return (
@@ -76,11 +58,7 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        {[
-          { label: 'Matches Today', value: matches.length },
-          { label: 'High Confidence', value: highConf },
-          { label: 'Tipster Picks', value: 0 }
-        ].map(s => (
+        {[{ label: 'Matches Today', value: matches.length }, { label: 'High Confidence', value: highConf }, { label: 'Tipster Picks', value: 0 }].map(s => (
           <div key={s.label} style={{ flex: '1 1 140px', background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '16px' }}>
             <div style={{ fontSize: '24px', fontWeight: 800 }}>{s.value}</div>
             <div style={{ fontSize: '12px', color: '#8B949E', marginTop: '4px' }}>{s.label}</div>
@@ -92,72 +70,66 @@ export default function DashboardPage() {
 
       {loading ? <LoadingSpinner message='Loading matches...' /> : sorted.length === 0 ? (
         <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
-          <div style={{ color: '#8B949E', fontSize: '14px', marginBottom: '6px' }}>No matches found for {activeLeague} today.</div>
-          <div style={{ color: '#484F58', fontSize: '12px' }}>Try another league or run Fetch Fixtures from Admin.</div>
+          <div style={{ color: '#8B949E', fontSize: '14px', marginBottom: '6px' }}>No matches for {activeLeague} today.</div>
+          <div style={{ color: '#484F58', fontSize: '12px' }}>Try another league above.</div>
         </div>
       ) : sorted.map(match => {
-        const homeScore = match.score?.total_home || 0
-        const awayScore = match.score?.total_away || 0
-        const topScore = Math.max(homeScore, awayScore)
+        const h = match.score?.total_home || 0
+        const a = match.score?.total_away || 0
+        const top = Math.max(h, a)
         const badge = getBadge(match.score)
-        const pred = getPrediction(match)
-        const isOpen = expanded[match.fixture_id]
+        const isOpen = !!expanded[match.fixture_id]
+        const gap = Math.abs(h - a)
+        const fav = h >= a ? match.home_team : match.away_team
+        const pred = top > 0 ? (gap < 5 ? 'Too close to call' : fav + ' favoured (' + Math.round(gap) + 'pt gap)') : null
         return (
           <div key={match.fixture_id} style={{ marginBottom: '10px' }}>
-            {/* Collapsed header - dark */}
-            <div onClick={() => toggle(match.fixture_id)} style={{ background: '#161B22', border: '1px solid ' + (badge ? badge.colour + '50' : '#2A3441'), borderRadius: isOpen ? '10px 10px 0 0' : '10px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div onClick={() => toggle(match.fixture_id)} style={{ background: '#161B22', border: '2px solid ' + (badge ? badge.colour + '60' : '#2A3441'), borderBottom: isOpen ? 'none' : undefined, borderRadius: isOpen ? '10px 10px 0 0' : '10px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '4px' }}>
                   {badge && <span style={{ background: badge.colour, color: '#000', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '8px' }}>{badge.label}</span>}
                   <span style={{ fontWeight: 700, fontSize: '15px' }}>{match.home_team}</span>
-                  <span style={{ color: '#484F58', fontSize: '12px' }}>vs</span>
+                  <span style={{ color: '#484F58', fontSize: '13px' }}>vs</span>
                   <span style={{ fontWeight: 700, fontSize: '15px' }}>{match.away_team}</span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#8B949E' }}>{match.league} - {formatKO(match.kickoff_time)}</div>
+                <div style={{ fontSize: '12px', color: '#8B949E' }}>{match.league} - {fmtKO(match.kickoff_time)}</div>
               </div>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-                {topScore > 0 && (
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '20px', fontWeight: 900, color: badge ? badge.colour : '#8B949E', lineHeight: 1 }}>{Math.round(topScore)}</div>
-                    <div style={{ fontSize: '10px', color: '#484F58' }}>score</div>
-                  </div>
-                )}
-                <span style={{ color: '#484F58', fontSize: '14px' }}>{isOpen ? 'v' : '>'}</span>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+                {top > 0 && <div style={{ textAlign: 'right' }}><div style={{ fontSize: '20px', fontWeight: 900, color: badge ? badge.colour : '#8B949E', lineHeight: 1 }}>{Math.round(top)}</div><div style={{ fontSize: '10px', color: '#484F58' }}>score</div></div>}
+                <span style={{ color: '#484F58', fontSize: '16px', fontWeight: 700 }}>{isOpen ? String.fromCharCode(8964) : '>'}</span>
               </div>
             </div>
-
-            {/* Expanded - WHITE background */}
             {isOpen && (
-              <div style={{ background: '#ffffff', border: '2px solid ' + (badge ? badge.colour : '#00C896'), borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '16px 18px', color: '#111' }}>
-                {/* Engine scores */}
+              <div style={{ background: '#ffffff', border: '2px solid ' + (badge ? badge.colour + '60' : '#00C896'), borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '18px', color: '#111' }}>
                 {match.score && (
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
-                    <div style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '12px', textAlign: 'center', border: homeScore > awayScore ? '2px solid #00C896' : '1px solid #e0e0e0' }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>HOME ENGINE</div>
-                      <div style={{ fontSize: '28px', fontWeight: 900, color: homeScore > awayScore ? '#00C896' : '#111' }}>{Math.round(homeScore)}</div>
-                      <div style={{ fontSize: '12px', color: '#444', marginTop: '2px', fontWeight: 600 }}>{match.home_team}</div>
+                    <div style={{ flex: 1, background: '#f5f5f5', border: h > a ? '2px solid #00C896' : '1px solid #e0e0e0', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase' }}>Home Engine</div>
+                      <div style={{ fontSize: '28px', fontWeight: 900, color: h > a ? '#00C896' : '#333' }}>{Math.round(h)}</div>
+                      <div style={{ fontSize: '12px', color: '#444', fontWeight: 600, marginTop: '2px' }}>{match.home_team}</div>
                     </div>
-                    <div style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '12px', textAlign: 'center', border: awayScore > homeScore ? '2px solid #00C896' : '1px solid #e0e0e0' }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>AWAY ENGINE</div>
-                      <div style={{ fontSize: '28px', fontWeight: 900, color: awayScore > homeScore ? '#00C896' : '#111' }}>{Math.round(awayScore)}</div>
-                      <div style={{ fontSize: '12px', color: '#444', marginTop: '2px', fontWeight: 600 }}>{match.away_team}</div>
+                    <div style={{ flex: 1, background: '#f5f5f5', border: a > h ? '2px solid #00C896' : '1px solid #e0e0e0', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase' }}>Away Engine</div>
+                      <div style={{ fontSize: '28px', fontWeight: 900, color: a > h ? '#00C896' : '#333' }}>{Math.round(a)}</div>
+                      <div style={{ fontSize: '12px', color: '#444', fontWeight: 600, marginTop: '2px' }}>{match.away_team}</div>
                     </div>
                   </div>
                 )}
-                {/* Prediction */}
                 {pred && (
-                  <div style={{ background: '#f5f5f5', borderRadius: '6px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px', fontWeight: 600, color: pred.colour === '#00C896' ? '#007a5e' : '#b38600' }}>
-                    {pred.text}
+                  <div style={{ background: gap < 5 ? '#fff8e6' : '#f0faf6', border: '1px solid ' + (gap < 5 ? '#F0B90B60' : '#00C89660'), borderRadius: '6px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px', fontWeight: 600, color: gap < 5 ? '#b38600' : '#007a5e' }}>
+                    {pred}
                   </div>
                 )}
-                {/* Bookmakers */}
-                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid #e5e5e5' }}>
-                  <span style={{ fontSize: '11px', color: '#888', lineHeight: '26px', marginRight: '4px' }}>Bet with:</span>
-                  {BOOKMAKERS.map(bm => (
-                    <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#f5f5f5', border: '1px solid #ddd', color: '#333', padding: '3px 10px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: 600 }}>{bm}</a>
-                  ))}
+                {!match.score && <div style={{ color: '#888', fontSize: '13px', marginBottom: '14px' }}>Engine score pending - run Score from Admin.</div>}
+                <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: '#888', marginRight: '4px' }}>Bet with:</span>
+                    {BOOKMAKERS.map(bm => (
+                      <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#f5f5f5', border: '1px solid #ddd', color: '#333', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: 600 }}>{bm}</a>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#aaa', marginTop: '8px' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
                 </div>
-                <div style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
               </div>
             )}
           </div>
