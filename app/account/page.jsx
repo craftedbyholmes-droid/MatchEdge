@@ -1,87 +1,111 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { createAuthClient } from '@/lib/supabaseAuth'
 import Link from 'next/link'
-import supabaseClient from '@/lib/supabaseClient'
-import { usePlan } from '@/lib/usePlan'
+
+const PLAN_LABELS = { free: 'Free', pro: 'Pro', edge: 'Edge' }
+const PLAN_COLOURS = { free: '#6b7280', pro: '#185FA5', edge: '#f0c040' }
 
 export default function AccountPage() {
+  const [user, setUser] = useState(null)
+  const [plan, setPlan] = useState('free')
+  const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const [session, setSession] = useState(null)
-  const { plan } = usePlan()
+  const [msg, setMsg] = useState('')
+  const [mode, setMode] = useState('signin')
 
   useEffect(() => {
-    supabaseClient.auth.getSession().then(({ data: { session } }) => setSession(session))
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_e, s) => setSession(s))
-    return () => subscription.unsubscribe()
+    const supabase = createAuthClient()
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        setUser(session.user)
+        const res = await fetch('/api/user/plan', { headers: { Authorization: 'Bearer ' + session.access_token } })
+        const data = await res.json()
+        const p = data.plan || 'free'
+        setPlan(p)
+        // Set cookie and cache
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString()
+        document.cookie = 'me_plan=' + p + '; expires=' + expires + '; path=/; SameSite=Lax'
+        localStorage.setItem('me_plan_cache', JSON.stringify({ plan: p, ts: Date.now(), uid: session.user.id }))
+      }
+      setLoading(false)
+    })
   }, [])
 
-  async function handleSignIn() {
-    setError('')
-    if (!email || !password) { setError('Please enter your email and password.'); return }
-    setLoading(true)
-    const { error: signInError } = await supabaseClient.auth.signInWithPassword({ email, password })
-    if (signInError) { setError(signInError.message); setLoading(false); return }
-    setLoading(false)
+  async function signIn() {
+    const supabase = createAuthClient()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setMsg(error.message); return }
+    setUser(data.user)
+    // Fetch and cache plan immediately on sign in
+    const res = await fetch('/api/user/plan', { headers: { Authorization: 'Bearer ' + data.session.access_token } })
+    const planData = await res.json()
+    const p = planData.plan || 'free'
+    setPlan(p)
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString()
+    document.cookie = 'me_plan=' + p + '; expires=' + expires + '; path=/; SameSite=Lax'
+    localStorage.setItem('me_plan_cache', JSON.stringify({ plan: p, ts: Date.now(), uid: data.user.id }))
+    setMsg('Signed in successfully')
   }
 
-  async function handleSignOut() {
-    await supabaseClient.auth.signOut()
-    setSession(null)
+  async function signOut() {
+    const supabase = createAuthClient()
+    await supabase.auth.signOut()
+    document.cookie = 'me_plan=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+    localStorage.removeItem('me_plan_cache')
+    setUser(null)
+    setPlan('free')
+    setMsg('Signed out')
   }
 
-  async function handleResetPassword() {
-    if (!email) { setError('Enter your email address above first.'); return }
-    const { error: resetError } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/account' })
-    if (resetError) { setError(resetError.message); return }
-    setMessage('Password reset email sent. Check your inbox.')
+  async function resetPassword() {
+    const supabase = createAuthClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email)
+    setMsg(error ? error.message : 'Reset email sent - check your inbox')
   }
 
-  const inputStyle = { width: '100%', padding: '10px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#e8e8f0', fontSize: '16px', marginBottom: '12px' }
-  const planColour = plan === 'edge' ? '#f0c040' : plan === 'pro' ? '#4d9fff' : '#6b7280'
-  const planLabel = plan === 'edge' ? 'Edge' : plan === 'pro' ? 'Pro' : 'Free'
+  const inputStyle = { width: '100%', padding: '10px 14px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '16px', boxSizing: 'border-box' }
+  const btnStyle = (colour) => ({ width: '100%', padding: '11px', background: colour || '#0F6E56', color: colour === '#1c1c28' ? '#9ca3af' : '#fff', border: '1px solid ' + (colour === '#1c1c28' ? '#2a2a3a' : 'transparent'), borderRadius: '6px', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginBottom: '10px' })
 
-  if (session) {
-    return (
-      <div style={{ maxWidth: '420px', margin: '40px auto', padding: '0 16px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '24px' }}>My Account</h1>
-        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '16px' }}>
-          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Signed in as</div>
-          <div style={{ fontWeight: 600, marginBottom: '16px' }}>{session.user.email}</div>
-          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Current plan</div>
-          <div style={{ fontWeight: 700, color: planColour, fontSize: '18px', marginBottom: '16px' }}>{planLabel}</div>
-          {plan === 'free' && (
-            <Link href='/pricing' style={{ display: 'block', textAlign: 'center', background: '#0F6E56', color: '#fff', padding: '10px', borderRadius: '6px', fontWeight: 600, fontSize: '14px', marginBottom: '12px' }}>Upgrade to Pro or Edge</Link>
-          )}
-          <button onClick={handleSignOut} style={{ width: '100%', padding: '10px', background: '#1c1c28', color: '#9ca3af', border: '1px solid #2a2a3a', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>Sign Out</button>
+  if (loading) return <div style={{ padding: '60px', textAlign: 'center', color: '#6b7280' }}>Loading...</div>
+
+  if (user) return (
+    <div style={{ maxWidth: '480px', margin: '0 auto', paddingBottom: '60px' }}>
+      <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '24px' }}>Your Account</h1>
+      <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Signed in as</div>
+        <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '16px' }}>{user.email}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#1c1c28', borderRadius: '6px', marginBottom: '20px' }}>
+          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: PLAN_COLOURS[plan] || '#6b7280' }} />
+          <div>
+            <div style={{ fontWeight: 700, color: PLAN_COLOURS[plan] || '#6b7280' }}>{PLAN_LABELS[plan] || plan} Plan</div>
+            {plan === 'free' && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>Upgrade to Pro or Edge for full access</div>}
+          </div>
+          {plan === 'free' && <Link href='/pricing' style={{ marginLeft: 'auto', background: '#0F6E56', color: '#fff', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>Upgrade</Link>}
         </div>
-        <div style={{ fontSize: '12px', color: '#4b5563', textAlign: 'center', lineHeight: '1.6' }}>
-          18+ only. Please gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#6b7280' }}>BeGambleAware.org</a>
-        </div>
+        <button onClick={signOut} style={btnStyle('#1c1c28')}>Sign Out</button>
       </div>
-    )
-  }
+      {msg && <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center' }}>{msg}</div>}
+    </div>
+  )
 
   return (
-    <div style={{ maxWidth: '420px', margin: '40px auto', padding: '0 16px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '6px' }}>Sign In</h1>
-      <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>Welcome back to MatchEdge.</p>
-      {message && <div style={{ color: '#22c55e', fontSize: '13px', marginBottom: '12px', padding: '10px', background: '#22c55e10', borderRadius: '6px' }}>{message}</div>}
-      {error && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '12px', padding: '10px', background: '#ef444410', borderRadius: '6px' }}>{error}</div>}
-      <input style={inputStyle} type='email' placeholder='Email address' value={email} onChange={e => setEmail(e.target.value)} autoComplete='email' />
-      <input style={inputStyle} type='password' placeholder='Password' value={password} onChange={e => setPassword(e.target.value)} autoComplete='current-password' />
-      <button onClick={handleSignIn} disabled={loading} style={{ width: '100%', padding: '12px', background: loading ? '#1c1c28' : '#0F6E56', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer', marginBottom: '10px' }}>
-        {loading ? 'Signing in...' : 'Sign In'}
-      </button>
-      <button onClick={handleResetPassword} style={{ width: '100%', padding: '10px', background: 'transparent', color: '#6b7280', border: 'none', cursor: 'pointer', fontSize: '13px', marginBottom: '16px' }}>Forgot password?</button>
-      <p style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280' }}>
-        No account? <Link href='/join' style={{ color: '#0F6E56' }}>Create one free</Link>
-      </p>
-      <div style={{ marginTop: '32px', fontSize: '12px', color: '#4b5563', textAlign: 'center', lineHeight: '1.6' }}>
-        18+ only. Please gamble responsibly.<br /><a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#6b7280' }}>BeGambleAware.org</a> | 0808 8020 133 (free, 24/7)
+    <div style={{ maxWidth: '420px', margin: '0 auto', paddingBottom: '60px' }}>
+      <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '24px' }}>
+        {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
+      </h1>
+      <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '10px', padding: '24px' }}>
+        <div style={{ marginBottom: '14px' }}><input style={inputStyle} type='email' placeholder='Email address' value={email} onChange={e => setEmail(e.target.value)} /></div>
+        {mode !== 'reset' && <div style={{ marginBottom: '20px' }}><input style={inputStyle} type='password' placeholder='Password' value={password} onChange={e => setPassword(e.target.value)} /></div>}
+        {mode === 'signin' && <button onClick={signIn} style={btnStyle()}>Sign In</button>}
+        {mode === 'reset' && <button onClick={resetPassword} style={btnStyle()}>Send Reset Email</button>}
+        {msg && <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', marginBottom: '12px' }}>{msg}</div>}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', fontSize: '13px', color: '#6b7280', flexWrap: 'wrap' }}>
+          {mode !== 'signin' && <button onClick={() => setMode('signin')} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '13px' }}>Sign In</button>}
+          {mode !== 'reset' && <button onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '13px' }}>Forgot password?</button>}
+          <Link href='/join' style={{ color: '#0F6E56', fontWeight: 600 }}>Create account</Link>
+        </div>
       </div>
     </div>
   )
