@@ -8,6 +8,17 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 const GBP = String.fromCharCode(163)
 const BOOKMAKERS = ['Bet365', 'William Hill', 'Ladbrokes', 'Coral', 'Paddy Power', 'Betfred']
 
+function decToFrac(dec) {
+  if (!dec || dec <= 1) return 'N/A'
+  const n = dec - 1
+  if (n < 0.4) return '1/3'; if (n < 0.55) return '4/7'; if (n < 0.7) return '4/6'
+  if (n < 0.85) return '5/6'; if (n < 1.05) return 'Evs'; if (n < 1.2) return '11/10'
+  if (n < 1.4) return '6/5'; if (n < 1.6) return '6/4'; if (n < 1.85) return '7/4'
+  if (n < 2.1) return '2/1'; if (n < 2.4) return '9/4'; if (n < 2.7) return '5/2'
+  if (n < 3.1) return '3/1'; if (n < 3.6) return '7/2'; if (n < 4.1) return '4/1'
+  return Math.round(n) + '/1'
+}
+
 export default function DashboardPage() {
   const { plan } = usePlan()
   const { activeLeague, activeCategory } = useLeague()
@@ -120,6 +131,74 @@ export default function DashboardPage() {
                     {pred}
                   </div>
                 )}
+                {/* Bet markets */}
+                {(() => {
+                  const odds = match.score?.modifiers?.odds
+                  if (!odds) return null
+                  const homeW = decToFrac(odds.match_winner?.home)
+                  const draw  = decToFrac(odds.match_winner?.draw)
+                  const awayW = decToFrac(odds.match_winner?.away)
+                  const over  = decToFrac(odds.over_under?.over)
+                  const under = decToFrac(odds.over_under?.under)
+                  const bttsY = decToFrac(odds.btts?.yes)
+                  const bttsN = decToFrac(odds.btts?.no)
+                  const hasMatch = homeW !== 'N/A' || draw !== 'N/A' || awayW !== 'N/A'
+                  const hasOU   = over !== 'N/A' || under !== 'N/A'
+                  const hasBTTS = bttsY !== 'N/A' || bttsN !== 'N/A'
+                  if (!hasMatch && !hasOU && !hasBTTS) return null
+                  return (
+                    <div style={{ marginBottom: '14px' }}>
+                      {hasMatch && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', letterSpacing: '1px', marginBottom: '6px' }}>MATCH RESULT</div>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {[
+                              { label: match.home_team + ' Win', odds: homeW, signal: h > a + 15 },
+                              { label: 'Draw',                   odds: draw,  signal: gap < 5 },
+                              { label: match.away_team + ' Win', odds: awayW, signal: a > h + 15 }
+                            ].map(o => (
+                              <div key={o.label} style={{ flex: 1, background: o.signal ? '#f0faf6' : '#f5f5f5', border: '1px solid ' + (o.signal ? '#00C89660' : '#e0e0e0'), borderRadius: '6px', padding: '8px 6px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', lineHeight: '1.3' }}>{o.label}</div>
+                                <div style={{ fontSize: '16px', fontWeight: 800, color: o.signal ? '#007a5e' : '#111' }}>{o.odds}</div>
+                                {o.signal && <div style={{ fontSize: '9px', color: '#00C896', fontWeight: 700, marginTop: '2px' }}>ENGINE PICK</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(hasOU || hasBTTS) && (
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                          {hasOU && (
+                            <div style={{ flex: 1, minWidth: '140px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', letterSpacing: '1px', marginBottom: '6px' }}>GOALS MARKET</div>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                {[{ label: 'Over 2.5', odds: over }, { label: 'Under 2.5', odds: under }].map(o => (
+                                  <div key={o.label} style={{ flex: 1, background: '#f5f5f5', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '8px 6px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>{o.label}</div>
+                                    <div style={{ fontSize: '16px', fontWeight: 800, color: '#111' }}>{o.odds}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {hasBTTS && (
+                            <div style={{ flex: 1, minWidth: '140px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', letterSpacing: '1px', marginBottom: '6px' }}>BOTH TEAMS TO SCORE</div>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                {[{ label: 'Yes', odds: bttsY }, { label: 'No', odds: bttsN }].map(o => (
+                                  <div key={o.label} style={{ flex: 1, background: '#f5f5f5', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '8px 6px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>{o.label}</div>
+                                    <div style={{ fontSize: '16px', fontWeight: 800, color: '#111' }}>{o.odds}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
                 {!match.score && <div style={{ color: '#888', fontSize: '13px', marginBottom: '14px' }}>Engine score pending - run Score from Admin.</div>}
                 <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '12px' }}>
                   <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
