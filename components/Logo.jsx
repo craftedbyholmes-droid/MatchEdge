@@ -19,10 +19,10 @@ export function LogoFull({ size = 36, linkTo = '/' }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
       <LogoMark size={size} />
       <div style={{ lineHeight: 1 }}>
-        <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: Math.round(size * 0.52) + 'px', color: 'var(--text)', letterSpacing: '-0.3px' }}>
-          Match<span style={{ color: 'var(--primary)' }}>Edge</span>
+        <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: Math.round(size * 0.52) + 'px', color: '#E6EDF3', letterSpacing: '-0.3px' }}>
+          Match<span style={{ color: '#00C896' }}>Edge</span>
         </div>
-        <div style={{ fontFamily: 'Courier New, monospace', fontSize: Math.round(size * 0.25) + 'px', color: 'var(--text-muted)', letterSpacing: '2px', marginTop: '2px', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: 'Courier New, monospace', fontSize: Math.round(size * 0.25) + 'px', color: '#484F58', letterSpacing: '2px', marginTop: '2px', textTransform: 'uppercase' }}>
           Football Intelligence
         </div>
       </div>
@@ -36,8 +36,8 @@ export function LogoCompact({ linkTo = '/' }) {
   return (
     <Link href={linkTo} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
       <LogoMark size={30} />
-      <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: '17px', color: 'var(--text)', letterSpacing: '-0.3px' }}>
-        Match<span style={{ color: 'var(--primary)' }}>Edge</span>
+      <span style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: '17px', color: '#E6EDF3', letterSpacing: '-0.3px' }}>
+        Match<span style={{ color: '#00C896' }}>Edge</span>
       </span>
     </Link>
   )

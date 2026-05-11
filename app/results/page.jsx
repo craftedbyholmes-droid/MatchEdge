@@ -27,11 +27,11 @@ export default function ResultsPage() {
   const placed = pastResults.filter(r => r.outcome === 'win' || r.outcome === 'placed').length
   const accuracy = totalSels > 0 ? Math.round((winners / totalSels) * 100) : 0
 
-  const outcomeColour = (o) => o === 'win' ? 'var(--win)' : o === 'loss' ? '#ef4444' : o === 'void' ? '#f59e0b' : 'var(--text-muted)'
+  const outcomeColour = (o) => o === 'win' ? '#00C896' : o === 'loss' ? '#ef4444' : o === 'void' ? '#f59e0b' : '#484F58'
   const outcomeLabel = (o) => o === 'win' ? 'WIN' : o === 'loss' ? 'LOSS' : o === 'void' ? 'N/R' : 'PENDING'
-  const plColour = (pl) => pl > 0 ? 'var(--win)' : pl < 0 ? '#ef4444' : 'var(--text-secondary)'
+  const plColour = (pl) => pl > 0 ? '#00C896' : pl < 0 ? '#ef4444' : '#8B949E'
 
-  const PERSONA_COLOUR = { gordon: 'var(--primary)', stan: '#185FA5', pez: '#993C1D' }
+  const PERSONA_COLOUR = { gordon: '#00C896', stan: '#185FA5', pez: '#993C1D' }
   const PERSONA_NAME = { gordon: 'Gaffer Gordon', stan: 'Stats Stan', pez: 'Punter Pez' }
 
   return (
@@ -40,33 +40,33 @@ export default function ResultsPage() {
 
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
         {[['Selections', totalSels], ['Winners', winners], ['Win Rate', accuracy + '%']].map(([label, val]) => (
-          <div key={label} style={{ flex: '1 1 100px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '14px 16px' }}>
+          <div key={label} style={{ flex: '1 1 100px', background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '14px 16px' }}>
             <div style={{ fontSize: '22px', fontWeight: 800 }}>{val}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{label}</div>
+            <div style={{ fontSize: '12px', color: '#484F58', marginTop: '2px' }}>{label}</div>
           </div>
         ))}
       </div>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
         {[['model', 'Model Results'], ['tipsters', 'Tipster Competition']].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ padding: '8px 18px', background: tab === id ? 'var(--primary)' : 'var(--card-raised)', color: '#fff', border: '1px solid ' + (tab === id ? 'var(--primary)' : 'var(--border)'), borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>{label}</button>
+          <button key={id} onClick={() => setTab(id)} style={{ padding: '8px 18px', background: tab === id ? '#00C896' : '#1E2530', color: '#fff', border: '1px solid ' + (tab === id ? '#00C896' : '#2A3441'), borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>{label}</button>
         ))}
       </div>
 
       {tab === 'model' && (
         plan === 'free' ? <PlanGate requiredPlan='pro' currentPlan={plan}><div /></PlanGate> : (
           loading ? <LoadingSpinner /> :
-          dates.length === 0 ? <div style={{ color: 'var(--text-muted)', padding: '40px 0', textAlign: 'center' }}>No results yet. Check back after the first settled picks.</div> : (
+          dates.length === 0 ? <div style={{ color: '#484F58', padding: '40px 0', textAlign: 'center' }}>No results yet. Check back after the first settled picks.</div> : (
             dates.map(date => (
               <div key={date} style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: date === yesterday ? 'var(--gold)' : 'var(--text-secondary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {date}{date === yesterday && <span style={{ fontSize: '10px', background: 'var(--gold)20', color: 'var(--gold)', padding: '2px 8px', borderRadius: '10px' }}>YESTERDAY</span>}
+                <div style={{ fontSize: '13px', fontWeight: 700, color: date === yesterday ? '#F0B90B' : '#8B949E', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {date}{date === yesterday && <span style={{ fontSize: '10px', background: '#F0B90B20', color: '#F0B90B', padding: '2px 8px', borderRadius: '10px' }}>YESTERDAY</span>}
                 </div>
                 {byDate[date].map(r => (
-                  <div key={r.pick_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--card)', borderRadius: '6px', marginBottom: '6px', borderLeft: '3px solid ' + (PERSONA_COLOUR[r.persona] || 'var(--border)') }}>
+                  <div key={r.pick_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#161B22', borderRadius: '6px', marginBottom: '6px', borderLeft: '3px solid ' + (PERSONA_COLOUR[r.persona] || '#2A3441') }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: '13px' }}>{r.selection}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '11px', color: '#484F58', marginTop: '2px' }}>
                         <span style={{ color: PERSONA_COLOUR[r.persona] }}>{PERSONA_NAME[r.persona]}</span> — {r.market} — {r.odds_fractional}
                       </div>
                     </div>
@@ -89,14 +89,14 @@ export default function ResultsPage() {
               {season.map(s => {
                 const pl = Number(s.profit_loss || 0)
                 const wr = s.total_picks > 0 ? Math.round((s.wins / s.total_picks) * 100) : 0
-                const colour = PERSONA_COLOUR[s.persona] || 'var(--text-muted)'
+                const colour = PERSONA_COLOUR[s.persona] || '#484F58'
                 return (
-                  <div key={s.persona} style={{ flex: '1 1 200px', background: 'var(--card)', border: '1px solid ' + colour + '40', borderRadius: '8px', padding: '16px' }}>
+                  <div key={s.persona} style={{ flex: '1 1 200px', background: '#161B22', border: '1px solid ' + colour + '40', borderRadius: '8px', padding: '16px' }}>
                     <div style={{ color: colour, fontWeight: 700, marginBottom: '10px' }}>{PERSONA_NAME[s.persona]}</div>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                      <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{wr}%</div><div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Win Rate</div></div>
-                      <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div><div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>W/Total</div></div>
-                      <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>P+L</div></div>
+                      <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{wr}%</div><div style={{ fontSize: '11px', color: '#484F58' }}>Win Rate</div></div>
+                      <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div><div style={{ fontSize: '11px', color: '#484F58' }}>W/Total</div></div>
+                      <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: '#484F58' }}>P+L</div></div>
                     </div>
                   </div>
                 )
@@ -106,9 +106,9 @@ export default function ResultsPage() {
         )
       )}
 
-      <div style={{ marginTop: '32px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.8' }}>
+      <div style={{ marginTop: '32px', fontSize: '12px', color: '#484F58', textAlign: 'center', lineHeight: '1.8' }}>
         Past performance is not a guarantee of future results. 18+ only.<br />
-        <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--text-muted)' }}>BeGambleAware.org</a> | 0808 8020 133
+        <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#484F58' }}>BeGambleAware.org</a> | 0808 8020 133
       </div>
     </div>
   )

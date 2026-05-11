@@ -13,7 +13,7 @@ const LEAGUE_META = {
 }
 
 const CATEGORY_META = {
-  top_leagues:   { label: 'Top Leagues',    colour: '#0F6E56' },
+  top_leagues:   { label: 'Top Leagues',    colour: '#00C896' },
   domestic_cups: { label: 'Domestic Cups',  colour: '#993C1D' },
   european:      { label: 'European',       colour: '#001D6C' },
   international: { label: 'International',  colour: '#8B0000' }
@@ -27,7 +27,7 @@ export default function LeagueSelector({ showCounts = {}, mode = 'full' }) {
       {/* Category tabs */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
         {Object.entries(CATEGORY_META).map(([key, meta]) => (
-          <button key={key} onClick={() => setActiveCategory(key)} style={{ padding: '6px 14px', background: activeCategory === key ? meta.colour : '#1c1c28', color: '#fff', border: '1px solid ' + (activeCategory === key ? meta.colour : '#2a2a3a'), borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+          <button key={key} onClick={() => setActiveCategory(key)} style={{ padding: '6px 14px', background: activeCategory === key ? meta.colour : '#1E2530', color: '#fff', border: '1px solid ' + (activeCategory === key ? meta.colour : '#2A3441'), borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
             {meta.label}
           </button>
         ))}
@@ -40,7 +40,7 @@ export default function LeagueSelector({ showCounts = {}, mode = 'full' }) {
             const meta = LEAGUE_META[l]
             const count = showCounts[l]
             return (
-              <button key={l} onClick={() => setActiveLeague(l)} style={{ padding: '6px 14px', background: activeLeague === l ? meta.colour : '#1c1c28', color: '#fff', border: '1px solid ' + (activeLeague === l ? meta.colour : '#2a2a3a'), borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button key={l} onClick={() => setActiveLeague(l)} style={{ padding: '6px 14px', background: activeLeague === l ? meta.colour : '#1E2530', color: '#fff', border: '1px solid ' + (activeLeague === l ? meta.colour : '#2A3441'), borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>{meta.label}</span>
               {count !== undefined && <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '10px', padding: '1px 6px', fontSize: '11px' }}>{count}</span>}
             </button>

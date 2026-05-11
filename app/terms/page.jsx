@@ -1,17 +1,17 @@
 'use client'
 export default function TermsPage() {
   const s = { marginBottom: '20px' }
-  const h2 = { fontSize: '16px', fontWeight: 700, marginBottom: '8px', marginTop: '28px', color: 'var(--text)' }
-  const p = { color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.7' }
-  const li = { color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.7', marginBottom: '6px' }
+  const h2 = { fontSize: '16px', fontWeight: 700, marginBottom: '8px', marginTop: '28px', color: '#E6EDF3' }
+  const p = { color: '#8B949E', fontSize: '14px', lineHeight: '1.7' }
+  const li = { color: '#8B949E', fontSize: '14px', lineHeight: '1.7', marginBottom: '6px' }
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '8px', marginTop: '32px' }}>Terms and Conditions</h1>
-      <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '32px' }}>Last updated: May 2026. Please read these terms carefully before using MatchEdge.</p>
+      <p style={{ color: '#484F58', fontSize: '13px', marginBottom: '32px' }}>Last updated: May 2026. Please read these terms carefully before using MatchEdge.</p>
 
-      <div style={{ background: 'var(--card)', border: '1px solid #f59e0b40', borderRadius: '8px', padding: '16px 18px', marginBottom: '28px' }}>
+      <div style={{ background: '#161B22', border: '1px solid #f59e0b40', borderRadius: '8px', padding: '16px 18px', marginBottom: '28px' }}>
         <p style={{ color: '#f59e0b', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Important Notice</p>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.7' }}>MatchEdge is a football analysis and tipping information service. We do not accept bets, operate as a bookmaker, or provide regulated financial advice. Our content is for information and entertainment purposes only. You must be 18 or over to use this service.</p>
+        <p style={{ color: '#8B949E', fontSize: '13px', lineHeight: '1.7' }}>MatchEdge is a football analysis and tipping information service. We do not accept bets, operate as a bookmaker, or provide regulated financial advice. Our content is for information and entertainment purposes only. You must be 18 or over to use this service.</p>
       </div>
 
       <h2 style={h2}>1. About MatchEdge</h2>
@@ -52,10 +52,10 @@ export default function TermsPage() {
       <h2 style={h2}>5. Subscriptions and Payments</h2>
       <p style={p}>MatchEdge offers the following subscription tiers:</p>
       <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Free:</strong> Limited access at no cost. No payment required.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Free:</strong> Limited access at no cost. No payment required.</li>
         <li style={li}><strong style={{ color: '#4d9fff' }}>Pro (£9.99/month):</strong> Full match analysis and 30 days tipster history.</li>
-        <li style={li}><strong style={{ color: 'var(--gold)' }}>Edge (£24.99/month):</strong> All Pro features plus live refresh, full history, and admin access.</li>
-        <li style={li}><strong style={{ color: 'var(--gold)' }}>Day Pass (£1.99):</strong> Full Edge access until midnight on the day of purchase.</li>
+        <li style={li}><strong style={{ color: '#F0B90B' }}>Edge (£24.99/month):</strong> All Pro features plus live refresh, full history, and admin access.</li>
+        <li style={li}><strong style={{ color: '#F0B90B' }}>Day Pass (£1.99):</strong> Full Edge access until midnight on the day of purchase.</li>
       </ul>
       <p style={{ ...p, marginTop: '10px' }}>Subscriptions are billed monthly in advance. You may cancel at any time. Cancellation takes effect at the end of the current billing period. No refunds are issued for partial months. Payments are processed securely by Stripe. We do not store card details.</p>
       <p style={{ ...p, marginTop: '10px' }}>Day passes expire at midnight UK time on the day of purchase and do not auto-renew. No refunds are available on day passes once purchased.</p>
@@ -88,9 +88,9 @@ export default function TermsPage() {
       <h2 style={h2}>12. Contact</h2>
       <p style={p}>For any questions regarding these Terms and Conditions, please contact us at the email address registered on your account or via the contact details published on the platform.</p>
 
-      <div style={{ marginTop: '40px', padding: '16px', background: 'var(--card)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.8' }}>
+      <div style={{ marginTop: '40px', padding: '16px', background: '#161B22', borderRadius: '8px', fontSize: '12px', color: '#484F58', textAlign: 'center', lineHeight: '1.8' }}>
         18+ only. MatchEdge does not accept bets. For information and entertainment only.<br />
-        <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--text-muted)' }}>BeGambleAware.org</a> | 0808 8020 133 (free, 24/7)
+        <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#484F58' }}>BeGambleAware.org</a> | 0808 8020 133 (free, 24/7)
       </div>
     </div>
   )

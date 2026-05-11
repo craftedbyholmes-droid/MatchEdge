@@ -1,12 +1,12 @@
 'use client'
 export default function PrivacyPage() {
-  const h2 = { fontSize: '16px', fontWeight: 700, marginBottom: '8px', marginTop: '28px', color: 'var(--text)' }
-  const p = { color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.7' }
-  const li = { color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.7', marginBottom: '6px' }
+  const h2 = { fontSize: '16px', fontWeight: 700, marginBottom: '8px', marginTop: '28px', color: '#E6EDF3' }
+  const p = { color: '#8B949E', fontSize: '14px', lineHeight: '1.7' }
+  const li = { color: '#8B949E', fontSize: '14px', lineHeight: '1.7', marginBottom: '6px' }
   return (
     <div style={{ maxWidth: '720px', margin: '0 auto', paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '8px', marginTop: '32px' }}>Privacy Policy</h1>
-      <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '32px' }}>Last updated: May 2026. This policy explains how MatchEdge collects, uses, and protects your personal data.</p>
+      <p style={{ color: '#484F58', fontSize: '13px', marginBottom: '32px' }}>Last updated: May 2026. This policy explains how MatchEdge collects, uses, and protects your personal data.</p>
 
       <h2 style={h2}>1. Who We Are</h2>
       <p style={p}>MatchEdge is a football analytics and tipping information platform. References to we, us, and our in this policy refer to the operators of the MatchEdge platform. We are the data controller for personal data collected through this service.</p>
@@ -14,10 +14,10 @@ export default function PrivacyPage() {
       <h2 style={h2}>2. Data We Collect</h2>
       <p style={p}>We collect the following categories of personal data:</p>
       <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Account data:</strong> Email address and encrypted password, collected at registration.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Subscription data:</strong> Your current plan (Free, Pro, Edge, or Day Pass) and subscription status. Payment processing is handled entirely by Stripe — we do not store card numbers or payment details.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Usage data:</strong> Pages visited, features used, and session information collected automatically via server logs and analytics.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Cookie data:</strong> We use a single functional cookie to record your acceptance of our cookie notice. We do not use advertising or tracking cookies.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Account data:</strong> Email address and encrypted password, collected at registration.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Subscription data:</strong> Your current plan (Free, Pro, Edge, or Day Pass) and subscription status. Payment processing is handled entirely by Stripe — we do not store card numbers or payment details.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Usage data:</strong> Pages visited, features used, and session information collected automatically via server logs and analytics.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Cookie data:</strong> We use a single functional cookie to record your acceptance of our cookie notice. We do not use advertising or tracking cookies.</li>
       </ul>
       <p style={{ ...p, marginTop: '10px' }}>We do not collect sensitive personal data such as financial information beyond what is necessary for subscription processing, nor do we collect data relating to ethnicity, religion, health, or political views.</p>
 
@@ -34,19 +34,19 @@ export default function PrivacyPage() {
       <h2 style={h2}>4. Legal Basis for Processing</h2>
       <p style={p}>We process your personal data on the following legal bases under UK GDPR:</p>
       <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Contract performance:</strong> Processing necessary to provide the service you have subscribed to.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Legitimate interests:</strong> Security monitoring, fraud prevention, and platform improvement.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Legal obligation:</strong> Where we are required to retain or disclose data by law.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Consent:</strong> For any optional communications such as newsletters, where you have explicitly opted in.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Contract performance:</strong> Processing necessary to provide the service you have subscribed to.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Legitimate interests:</strong> Security monitoring, fraud prevention, and platform improvement.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Legal obligation:</strong> Where we are required to retain or disclose data by law.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Consent:</strong> For any optional communications such as newsletters, where you have explicitly opted in.</li>
       </ul>
 
       <h2 style={h2}>5. Data Sharing</h2>
       <p style={p}>We do not sell your personal data to third parties. We share data only with the following trusted service providers who process data on our behalf:</p>
       <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Supabase:</strong> Authentication and database hosting. Your account data is stored securely on Supabase infrastructure.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Stripe:</strong> Payment processing. Card data is handled entirely by Stripe and is never transmitted to or stored on our servers.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Vercel:</strong> Platform hosting and edge network delivery.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Anthropic:</strong> AI tip text generation. Match data and persona prompts are sent to the Anthropic API. No personal user data is included in these requests.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Supabase:</strong> Authentication and database hosting. Your account data is stored securely on Supabase infrastructure.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Stripe:</strong> Payment processing. Card data is handled entirely by Stripe and is never transmitted to or stored on our servers.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Vercel:</strong> Platform hosting and edge network delivery.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Anthropic:</strong> AI tip text generation. Match data and persona prompts are sent to the Anthropic API. No personal user data is included in these requests.</li>
       </ul>
       <p style={{ ...p, marginTop: '10px' }}>All third-party processors are required to handle your data in accordance with applicable data protection law.</p>
 
@@ -56,12 +56,12 @@ export default function PrivacyPage() {
       <h2 style={h2}>7. Your Rights</h2>
       <p style={p}>Under UK GDPR, you have the following rights regarding your personal data:</p>
       <ul style={{ paddingLeft: '20px', marginTop: '8px' }}>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Right of access:</strong> You may request a copy of the personal data we hold about you.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Right to rectification:</strong> You may request correction of inaccurate data.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Right to erasure:</strong> You may request deletion of your personal data, subject to legal retention obligations.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Right to restriction:</strong> You may request that we limit processing of your data in certain circumstances.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Right to portability:</strong> You may request your data in a portable, machine-readable format.</li>
-        <li style={li}><strong style={{ color: 'var(--text)' }}>Right to object:</strong> You may object to processing based on legitimate interests.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Right of access:</strong> You may request a copy of the personal data we hold about you.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Right to rectification:</strong> You may request correction of inaccurate data.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Right to erasure:</strong> You may request deletion of your personal data, subject to legal retention obligations.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Right to restriction:</strong> You may request that we limit processing of your data in certain circumstances.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Right to portability:</strong> You may request your data in a portable, machine-readable format.</li>
+        <li style={li}><strong style={{ color: '#E6EDF3' }}>Right to object:</strong> You may object to processing based on legitimate interests.</li>
       </ul>
       <p style={{ ...p, marginTop: '10px' }}>To exercise any of these rights, please contact us using the details in section 10. We will respond within 30 days. If you are not satisfied with our response, you have the right to lodge a complaint with the Information Commissioner's Office (ICO) at www.ico.org.uk.</p>
 
@@ -80,9 +80,9 @@ export default function PrivacyPage() {
       <h2 style={h2}>11. Changes to This Policy</h2>
       <p style={p}>We may update this Privacy Policy from time to time. We will notify registered users of material changes by email. The date at the top of this page reflects the date of the most recent update. Continued use of the platform following notification of changes constitutes acceptance of the revised policy.</p>
 
-      <div style={{ marginTop: '40px', padding: '16px', background: 'var(--card)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.8' }}>
+      <div style={{ marginTop: '40px', padding: '16px', background: '#161B22', borderRadius: '8px', fontSize: '12px', color: '#484F58', textAlign: 'center', lineHeight: '1.8' }}>
         18+ only. MatchEdge does not accept bets. For information and entertainment only.<br />
-        <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--text-muted)' }}>BeGambleAware.org</a> | 0808 8020 133 (free, 24/7)
+        <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#484F58' }}>BeGambleAware.org</a> | 0808 8020 133 (free, 24/7)
       </div>
     </div>
   )

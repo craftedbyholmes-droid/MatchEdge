@@ -5,7 +5,7 @@ import PlanGate from '@/components/PlanGate'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 const PERSONA_META = {
-  gordon: { name: 'Gaffer Gordon', colour: 'var(--primary)', market: 'Match Results',    bio: 'The ex-manager. Reads the game tactically. Trusts the unit scores.' },
+  gordon: { name: 'Gaffer Gordon', colour: '#00C896', market: 'Match Results',    bio: 'The ex-manager. Reads the game tactically. Trusts the unit scores.' },
   stan:   { name: 'Stats Stan',    colour: '#185FA5', market: 'BTTS / Over-Under', bio: 'The data obsessive. Lives for BTTS and over/under. Never watches the game.' },
   pez:    { name: 'Punter Pez',    colour: '#993C1D', market: 'Player Props',      bio: 'The instinctive one. Player props, cards, goalscorers. High risk, high reward.' }
 }
@@ -52,17 +52,17 @@ export default function TipstersPage() {
   function getStats(id) { return season.find(s => s.persona === id) || { wins: 0, total_picks: 0, profit_loss: 0 } }
   function getHistory(id) { return history.filter(h => h.persona === id) }
   function getPicks(id) { return picks.filter(p => p.persona === id) }
-  const plColour = pl => pl > 0 ? 'var(--win)' : pl < 0 ? '#ef4444' : 'var(--text-secondary)'
-  const outcomeColour = o => o === 'win' ? 'var(--win)' : o === 'loss' ? '#ef4444' : o === 'void' ? '#f59e0b' : 'var(--text-muted)'
+  const plColour = pl => pl > 0 ? '#00C896' : pl < 0 ? '#ef4444' : '#8B949E'
+  const outcomeColour = o => o === 'win' ? '#00C896' : o === 'loss' ? '#ef4444' : o === 'void' ? '#f59e0b' : '#484F58'
   const outcomeLabel  = o => o === 'win' ? 'WIN' : o === 'loss' ? 'LOSS' : o === 'void' ? 'VOID' : 'PENDING'
 
   return (
     <div style={{ paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Tipsters</h1>
 
-      <div style={{ background: 'var(--card)', border: '1px solid var(--primary)60', borderRadius: '8px', padding: '14px 18px', marginBottom: '24px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }}>When do picks go up?</div>
-        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+      <div style={{ background: '#161B22', border: '1px solid #00C89660', borderRadius: '8px', padding: '14px 18px', marginBottom: '24px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: '#00C896', marginBottom: '6px' }}>When do picks go up?</div>
+        <div style={{ fontSize: '13px', color: '#8B949E', lineHeight: '1.6' }}>
           Gordon, Stan and Pez publish selections for the next matchday automatically.
           Picks appear as soon as the next day fixtures are scored - often the evening before.
           The earlier you check, the better the odds available.
@@ -75,13 +75,13 @@ export default function TipstersPage() {
           const pl = Number(s.profit_loss || 0)
           const wr = s.total_picks > 0 ? Math.round((s.wins / s.total_picks) * 100) : 0
           return (
-            <div key={id} style={{ flex: '1 1 260px', background: 'var(--card)', border: '1px solid ' + meta.colour + '40', borderRadius: '8px', padding: '18px' }}>
+            <div key={id} style={{ flex: '1 1 260px', background: '#161B22', border: '1px solid ' + meta.colour + '40', borderRadius: '8px', padding: '18px' }}>
               <div style={{ color: meta.colour, fontWeight: 700, fontSize: '16px', marginBottom: '2px' }}>{meta.name}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '10px' }}>{meta.market}</div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '12px' }}>{meta.bio}</div>
+              <div style={{ color: '#484F58', fontSize: '12px', marginBottom: '10px' }}>{meta.market}</div>
+              <div style={{ color: '#8B949E', fontSize: '12px', marginBottom: '12px' }}>{meta.bio}</div>
               <div style={{ display: 'flex', gap: '16px' }}>
-                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div><div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>W/Total ({wr}%)</div></div>
-                <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Season P+L</div></div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800 }}>{s.wins}/{s.total_picks}</div><div style={{ fontSize: '11px', color: '#484F58' }}>W/Total ({wr}%)</div></div>
+                <div><div style={{ fontSize: '18px', fontWeight: 800, color: plColour(pl) }}>{pl >= 0 ? '+' : ''}£{Math.abs(pl).toFixed(2)}</div><div style={{ fontSize: '11px', color: '#484F58' }}>Season P+L</div></div>
               </div>
             </div>
           )
@@ -97,14 +97,14 @@ export default function TipstersPage() {
               {pickDate ? formatPickDate(pickDate) + 's Picks' : 'Picks'}
             </h2>
             {pickDate && pickDate !== today && (
-              <span style={{ fontSize: '11px', background: 'var(--gold)20', color: 'var(--gold)', border: '1px solid var(--gold)40', padding: '2px 10px', borderRadius: '10px', fontWeight: 700 }}>EARLY PICKS</span>
+              <span style={{ fontSize: '11px', background: '#F0B90B20', color: '#F0B90B', border: '1px solid #F0B90B40', padding: '2px 10px', borderRadius: '10px', fontWeight: 700 }}>EARLY PICKS</span>
             )}
           </div>
 
           {picks.length === 0 ? (
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '24px', textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '6px' }}>No picks generated yet</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Picks are generated automatically when the next matchday fixtures are scored.</div>
+            <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '24px', textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', color: '#484F58', marginBottom: '6px' }}>No picks generated yet</div>
+              <div style={{ fontSize: '12px', color: '#484F58' }}>Picks are generated automatically when the next matchday fixtures are scored.</div>
             </div>
           ) : (
             <div style={{ marginBottom: '24px' }}>
@@ -115,25 +115,25 @@ export default function TipstersPage() {
                   <div key={id} style={{ marginBottom: '20px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: meta.colour, marginBottom: '8px', letterSpacing: '1px' }}>{meta.name.toUpperCase()}</div>
                     {personaPicks.map(pick => (
-                      <div key={pick.pick_id} style={{ background: 'var(--card)', border: '1px solid ' + meta.colour + '30', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px' }}>
+                      <div key={pick.pick_id} style={{ background: '#161B22', border: '1px solid ' + meta.colour + '30', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px' }}>
                         {/* Match name - most important line */}
-                        <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px', color: 'var(--text)' }}>
+                        <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px', color: '#E6EDF3' }}>
                           {getMatchName(pick)}
                         </div>
                         {/* League + kickoff */}
                         {(pick.league || pick.kickoff_time) && (
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                          <div style={{ fontSize: '11px', color: '#484F58', marginBottom: '8px' }}>
                             {pick.league}{pick.kickoff_time ? ' - ' + new Date(pick.kickoff_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}
                           </div>
                         )}
                         {/* Selection + odds */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                            {pick.is_best_pick && <span style={{ fontSize: '10px', background: 'var(--gold)20', color: 'var(--gold)', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>BEST PICK</span>}
-                            <span style={{ fontWeight: 600, color: 'var(--text)' }}>{pick.selection}</span>
-                            <span style={{ color: 'var(--win)', fontWeight: 700 }}>@ {pick.odds_fractional}</span>
+                            {pick.is_best_pick && <span style={{ fontSize: '10px', background: '#F0B90B20', color: '#F0B90B', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>BEST PICK</span>}
+                            <span style={{ fontWeight: 600, color: '#E6EDF3' }}>{pick.selection}</span>
+                            <span style={{ color: '#00C896', fontWeight: 700 }}>@ {pick.odds_fractional}</span>
                           </div>
-                          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#484F58' }}>
                             <span>Score: {pick.engine_score}</span>
                             <span>Gap: {pick.score_gap}pts</span>
                             <span>Stake: £{pick.stake}</span>
@@ -141,15 +141,15 @@ export default function TipstersPage() {
                         </div>
                         {/* AI tip */}
                         {pick.tip_text && (
-                          <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: '10px', paddingLeft: '8px', borderLeft: '2px solid ' + meta.colour + '40' }}>
+                          <div style={{ fontSize: '13px', color: '#484F58', fontStyle: 'italic', marginBottom: '10px', paddingLeft: '8px', borderLeft: '2px solid ' + meta.colour + '40' }}>
                             {pick.tip_text}
                           </div>
                         )}
                         {/* Bookmaker links */}
-                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid var(--card-raised)' }}>
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginRight: '4px', lineHeight: '26px' }}>Bet with:</span>
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #1E2530' }}>
+                          <span style={{ fontSize: '10px', color: '#484F58', marginRight: '4px', lineHeight: '26px' }}>Bet with:</span>
                           {BOOKMAKERS.map(bm => (
-                            <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: 'var(--card-raised)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>{bm}</a>
+                            <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#1E2530', border: '1px solid #2A3441', color: '#8B949E', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>{bm}</a>
                           ))}
                         </div>
                       </div>
@@ -163,21 +163,21 @@ export default function TipstersPage() {
           <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px' }}>Pick History</h2>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {Object.entries(PERSONA_META).map(([id, meta]) => (
-              <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '6px 16px', background: activeTab === id ? meta.colour : 'var(--card-raised)', color: activeTab === id ? '#fff' : 'var(--text-secondary)', border: '1px solid ' + (activeTab === id ? meta.colour : 'var(--border)'), borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+              <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '6px 16px', background: activeTab === id ? meta.colour : '#1E2530', color: activeTab === id ? '#fff' : '#8B949E', border: '1px solid ' + (activeTab === id ? meta.colour : '#2A3441'), borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
                 {meta.name}
               </button>
             ))}
           </div>
           {loading ? <LoadingSpinner message='Loading history...' /> : getHistory(activeTab).length === 0 ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No settled picks yet. History builds after each matchday settles.</div>
+            <div style={{ color: '#484F58', fontSize: '14px' }}>No settled picks yet. History builds after each matchday settles.</div>
           ) : (
             getHistory(activeTab).map(pick => (
-              <div key={pick.pick_id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '12px 14px', marginBottom: '6px' }}>
+              <div key={pick.pick_id} style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '6px', padding: '12px 14px', marginBottom: '6px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '2px' }}>{getMatchName(pick)}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{pick.selection} @ {pick.odds_fractional}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{pick.pick_date} - {pick.league || ''}</div>
+                    <div style={{ fontSize: '12px', color: '#8B949E' }}>{pick.selection} @ {pick.odds_fractional}</div>
+                    <div style={{ fontSize: '11px', color: '#484F58', marginTop: '2px' }}>{pick.pick_date} - {pick.league || ''}</div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: outcomeColour(pick.outcome) }}>{outcomeLabel(pick.outcome)}</div>
@@ -189,8 +189,8 @@ export default function TipstersPage() {
           )}
         </>
       )}
-      <div style={{ marginTop: '32px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.8' }}>
-        18+ only. Please gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--text-muted)' }}>BeGambleAware.org</a>
+      <div style={{ marginTop: '32px', fontSize: '12px', color: '#484F58', textAlign: 'center', lineHeight: '1.8' }}>
+        18+ only. Please gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#484F58' }}>BeGambleAware.org</a>
       </div>
     </div>
   )
