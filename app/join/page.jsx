@@ -27,20 +27,20 @@ export default function JoinPage() {
     setLoading(false)
   }
 
-  const inputStyle = { width: '100%', padding: '10px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#e8e8f0', fontSize: '16px', marginBottom: '12px' }
-  const checkRow = { display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '14px', fontSize: '13px', color: '#9ca3af', lineHeight: '1.5' }
+  const inputStyle = { width: '100%', padding: '10px 12px', background: 'var(--card-raised)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '16px', marginBottom: '12px' }
+  const checkRow = { display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }
 
   return (
     <div style={{ maxWidth: '420px', margin: '40px auto', padding: '0 16px' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '6px' }}>Create Account</h1>
-      <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>Free to join. No card required.</p>
+      <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>Free to join. No card required.</p>
 
-      <div style={{ background: '#13131a', border: '1px solid #f59e0b40', borderRadius: '8px', padding: '14px 16px', marginBottom: '20px', fontSize: '13px', color: '#f59e0b' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid #f59e0b40', borderRadius: '8px', padding: '14px 16px', marginBottom: '20px', fontSize: '13px', color: '#f59e0b' }}>
         MatchEdge is for information and entertainment purposes only. Tips and analysis do not constitute financial advice. Please gamble responsibly.
       </div>
 
       {message ? (
-        <div style={{ background: '#0F6E5620', border: '1px solid #0F6E56', borderRadius: '8px', padding: '16px', color: '#0F6E56', fontSize: '14px' }}>{message}</div>
+        <div style={{ background: 'var(--primary)20', border: '1px solid var(--primary)', borderRadius: '8px', padding: '16px', color: 'var(--primary)', fontSize: '14px' }}>{message}</div>
       ) : (
         <>
           <input style={inputStyle} type='email' placeholder='Email address' value={email} onChange={e => setEmail(e.target.value)} autoComplete='email' />
@@ -53,29 +53,29 @@ export default function JoinPage() {
             </label>
             <label style={checkRow}>
               <input type='checkbox' checked={terms} onChange={e => setTerms(e.target.checked)} style={{ marginTop: '2px', flexShrink: 0 }} />
-              <span>I have read and accept the <Link href='/terms' style={{ color: '#0F6E56', textDecoration: 'underline' }}>Terms and Conditions</Link> and <Link href='/privacy' style={{ color: '#0F6E56', textDecoration: 'underline' }}>Privacy Policy</Link>.</span>
+              <span>I have read and accept the <Link href='/terms' style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Terms and Conditions</Link> and <Link href='/privacy' style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Privacy Policy</Link>.</span>
             </label>
             <label style={checkRow}>
               <input type='checkbox' checked={aware} onChange={e => setAware(e.target.checked)} style={{ marginTop: '2px', flexShrink: 0 }} />
-              <span>I understand that sports betting involves risk. MatchEdge promotes responsible gambling. If gambling is causing you harm, please visit <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#0F6E56', textDecoration: 'underline' }}>BeGambleAware.org</a> or call <strong>0808 8020 133</strong> (free, 24/7).</span>
+              <span>I understand that sports betting involves risk. MatchEdge promotes responsible gambling. If gambling is causing you harm, please visit <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--primary)', textDecoration: 'underline' }}>BeGambleAware.org</a> or call <strong>0808 8020 133</strong> (free, 24/7).</span>
             </label>
           </div>
 
           {error && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '12px', padding: '10px', background: '#ef444410', borderRadius: '6px' }}>{error}</div>}
 
-          <button onClick={handleSignUp} disabled={loading} style={{ width: '100%', padding: '12px', background: loading ? '#1c1c28' : '#0F6E56', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer' }}>
+          <button onClick={handleSignUp} disabled={loading} style={{ width: '100%', padding: '12px', background: loading ? 'var(--card-raised)' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Creating account...' : 'Create Free Account'}
           </button>
 
-          <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#6b7280' }}>
-            Already have an account? <Link href='/account' style={{ color: '#0F6E56' }}>Sign in</Link>
+          <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: 'var(--text-muted)' }}>
+            Already have an account? <Link href='/account' style={{ color: 'var(--primary)' }}>Sign in</Link>
           </p>
         </>
       )}
 
-      <div style={{ marginTop: '32px', padding: '14px 16px', background: '#13131a', borderRadius: '8px', fontSize: '12px', color: '#4b5563', textAlign: 'center', lineHeight: '1.6' }}>
+      <div style={{ marginTop: '32px', padding: '14px 16px', background: 'var(--card)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.6' }}>
         MatchEdge does not accept bets. We provide analysis and tipster content only.<br />
-        18+ only. Please gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#6b7280' }}>BeGambleAware.org</a>
+        18+ only. Please gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--text-muted)' }}>BeGambleAware.org</a>
       </div>
     </div>
   )

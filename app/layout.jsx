@@ -12,7 +12,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang='en'>
-      <body style={{ margin: 0, background: '#0a0a0f', color: '#e8e8f0', fontFamily: 'Inter, system-ui, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <body style={{ margin: 0, background: '#0B0E11', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <LeagueProvider>
           <NavAndTicker />
           <main style={{ flex: 1, maxWidth: '960px', margin: '0 auto', padding: '24px 16px', width: '100%', boxSizing: 'border-box' }}>

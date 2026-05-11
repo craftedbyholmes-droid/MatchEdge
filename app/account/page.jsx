@@ -4,7 +4,7 @@ import { createAuthClient } from '@/lib/supabaseAuth'
 import Link from 'next/link'
 
 const PLAN_LABELS = { free: 'Free', pro: 'Pro', edge: 'Edge' }
-const PLAN_COLOURS = { free: '#6b7280', pro: '#185FA5', edge: '#f0c040' }
+const PLAN_COLOURS = { free: 'var(--text-muted)', pro: '#185FA5', edge: 'var(--gold)' }
 
 export default function AccountPage() {
   const [user, setUser] = useState(null)
@@ -65,28 +65,28 @@ export default function AccountPage() {
     setMsg(error ? error.message : 'Reset email sent - check your inbox')
   }
 
-  const inputStyle = { width: '100%', padding: '10px 14px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '16px', boxSizing: 'border-box' }
-  const btnStyle = (colour) => ({ width: '100%', padding: '11px', background: colour || '#0F6E56', color: colour === '#1c1c28' ? '#9ca3af' : '#fff', border: '1px solid ' + (colour === '#1c1c28' ? '#2a2a3a' : 'transparent'), borderRadius: '6px', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginBottom: '10px' })
+  const inputStyle = { width: '100%', padding: '10px 14px', background: 'var(--card-raised)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '16px', boxSizing: 'border-box' }
+  const btnStyle = (colour) => ({ width: '100%', padding: '11px', background: colour || 'var(--primary)', color: colour === 'var(--card-raised)' ? 'var(--text-secondary)' : '#fff', border: '1px solid ' + (colour === 'var(--card-raised)' ? 'var(--border)' : 'transparent'), borderRadius: '6px', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginBottom: '10px' })
 
-  if (loading) return <div style={{ padding: '60px', textAlign: 'center', color: '#6b7280' }}>Loading...</div>
+  if (loading) return <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
 
   if (user) return (
     <div style={{ maxWidth: '480px', margin: '0 auto', paddingBottom: '60px' }}>
       <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '24px' }}>Your Account</h1>
-      <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
-        <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Signed in as</div>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Signed in as</div>
         <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '16px' }}>{user.email}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#1c1c28', borderRadius: '6px', marginBottom: '20px' }}>
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: PLAN_COLOURS[plan] || '#6b7280' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: 'var(--card-raised)', borderRadius: '6px', marginBottom: '20px' }}>
+          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: PLAN_COLOURS[plan] || 'var(--text-muted)' }} />
           <div>
-            <div style={{ fontWeight: 700, color: PLAN_COLOURS[plan] || '#6b7280' }}>{PLAN_LABELS[plan] || plan} Plan</div>
-            {plan === 'free' && <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>Upgrade to Pro or Edge for full access</div>}
+            <div style={{ fontWeight: 700, color: PLAN_COLOURS[plan] || 'var(--text-muted)' }}>{PLAN_LABELS[plan] || plan} Plan</div>
+            {plan === 'free' && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Upgrade to Pro or Edge for full access</div>}
           </div>
-          {plan === 'free' && <Link href='/pricing' style={{ marginLeft: 'auto', background: '#0F6E56', color: '#fff', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>Upgrade</Link>}
+          {plan === 'free' && <Link href='/pricing' style={{ marginLeft: 'auto', background: 'var(--primary)', color: '#fff', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>Upgrade</Link>}
         </div>
-        <button onClick={signOut} style={btnStyle('#1c1c28')}>Sign Out</button>
+        <button onClick={signOut} style={btnStyle('var(--card-raised)')}>Sign Out</button>
       </div>
-      {msg && <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center' }}>{msg}</div>}
+      {msg && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center' }}>{msg}</div>}
     </div>
   )
 
@@ -95,16 +95,16 @@ export default function AccountPage() {
       <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '24px' }}>
         {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
       </h1>
-      <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '10px', padding: '24px' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '24px' }}>
         <div style={{ marginBottom: '14px' }}><input style={inputStyle} type='email' placeholder='Email address' value={email} onChange={e => setEmail(e.target.value)} /></div>
         {mode !== 'reset' && <div style={{ marginBottom: '20px' }}><input style={inputStyle} type='password' placeholder='Password' value={password} onChange={e => setPassword(e.target.value)} /></div>}
         {mode === 'signin' && <button onClick={signIn} style={btnStyle()}>Sign In</button>}
         {mode === 'reset' && <button onClick={resetPassword} style={btnStyle()}>Send Reset Email</button>}
-        {msg && <div style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', marginBottom: '12px' }}>{msg}</div>}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', fontSize: '13px', color: '#6b7280', flexWrap: 'wrap' }}>
-          {mode !== 'signin' && <button onClick={() => setMode('signin')} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '13px' }}>Sign In</button>}
-          {mode !== 'reset' && <button onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '13px' }}>Forgot password?</button>}
-          <Link href='/join' style={{ color: '#0F6E56', fontWeight: 600 }}>Create account</Link>
+        {msg && <div style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '12px' }}>{msg}</div>}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', fontSize: '13px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          {mode !== 'signin' && <button onClick={() => setMode('signin')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}>Sign In</button>}
+          {mode !== 'reset' && <button onClick={() => setMode('reset')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}>Forgot password?</button>}
+          <Link href='/join' style={{ color: 'var(--primary)', fontWeight: 600 }}>Create account</Link>
         </div>
       </div>
     </div>

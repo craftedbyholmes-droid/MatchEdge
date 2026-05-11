@@ -68,12 +68,12 @@ export default function CompetitionFixturesPage({ params }) {
     return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   }
   function formatKO(kt) { if (!kt) return 'TBC'; return new Date(kt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }
-  function getBadge(score) { if (!score) return null; const t = Math.max(score.total_home||0, score.total_away||0); if (t >= 80) return { label: 'BEST BET', colour: '#f0c040' }; if (t >= 75) return { label: 'HIGH CONF', colour: '#22c55e' }; return null }
-  const colour = comp?.colour || '#0F6E56'
+  function getBadge(score) { if (!score) return null; const t = Math.max(score.total_home||0, score.total_away||0); if (t >= 80) return { label: 'BEST BET', colour: 'var(--gold)' }; if (t >= 75) return { label: 'HIGH CONF', colour: 'var(--win)' }; return null }
+  const colour = comp?.colour || 'var(--primary)'
 
   if (plan === 'free') return (
     <div style={{ paddingBottom: '60px' }}>
-      <Link href='/competitions' style={{ color: '#6b7280', fontSize: '13px' }}>← Competitions</Link>
+      <Link href='/competitions' style={{ color: 'var(--text-muted)', fontSize: '13px' }}>← Competitions</Link>
       <h1 style={{ fontSize: '22px', fontWeight: 800, margin: '12px 0 6px' }}>{compName}</h1>
       <PlanGate requiredPlan='pro' currentPlan={plan}><div /></PlanGate>
     </div>
@@ -81,7 +81,7 @@ export default function CompetitionFixturesPage({ params }) {
 
   return (
     <div style={{ paddingBottom: '60px' }}>
-      <Link href='/competitions' style={{ color: '#6b7280', fontSize: '13px' }}>← All Competitions</Link>
+      <Link href='/competitions' style={{ color: 'var(--text-muted)', fontSize: '13px' }}>← All Competitions</Link>
 
       {/* Header */}
       <div style={{ background: colour, borderRadius: '8px', padding: '16px 20px', margin: '12px 0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -95,19 +95,19 @@ export default function CompetitionFixturesPage({ params }) {
       {/* Group filter for tournaments */}
       {hasGroups && groups.length > 0 && (
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
-          <button onClick={() => setActiveGroup('all')} style={{ padding: '5px 12px', background: activeGroup === 'all' ? colour : '#1c1c28', color: '#fff', border: '1px solid ' + (activeGroup === 'all' ? colour : '#2a2a3a'), borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>All Groups</button>
+          <button onClick={() => setActiveGroup('all')} style={{ padding: '5px 12px', background: activeGroup === 'all' ? colour : 'var(--card-raised)', color: '#fff', border: '1px solid ' + (activeGroup === 'all' ? colour : 'var(--border)'), borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>All Groups</button>
           {groups.map(g => (
-            <button key={g} onClick={() => setActiveGroup(g)} style={{ padding: '5px 12px', background: activeGroup === g ? colour : '#1c1c28', color: '#fff', border: '1px solid ' + (activeGroup === g ? colour : '#2a2a3a'), borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Group {g}</button>
+            <button key={g} onClick={() => setActiveGroup(g)} style={{ padding: '5px 12px', background: activeGroup === g ? colour : 'var(--card-raised)', color: '#fff', border: '1px solid ' + (activeGroup === g ? colour : 'var(--border)'), borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Group {g}</button>
           ))}
         </div>
       )}
 
       {loading ? (
-        <div style={{ color: '#6b7280', padding: '40px 0', textAlign: 'center' }}>Loading fixtures...</div>
+        <div style={{ color: 'var(--text-muted)', padding: '40px 0', textAlign: 'center' }}>Loading fixtures...</div>
       ) : fixtures.length === 0 ? (
-        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
-          <div style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px' }}>No fixtures this week for {compName}.</div>
-          <div style={{ color: '#4b5563', fontSize: '12px' }}>Check back when the next round of fixtures is scheduled.</div>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
+          <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '8px' }}>No fixtures this week for {compName}.</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Check back when the next round of fixtures is scheduled.</div>
         </div>
       ) : (
         dates.map(date => {
@@ -115,9 +115,9 @@ export default function CompetitionFixturesPage({ params }) {
           if (!dayFixtures.length) return null
           return (
             <div key={date} style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#9ca3af', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span>{formatDate(date)}</span>
-                <span style={{ fontSize: '11px', color: '#4b5563', background: '#1c1c28', padding: '2px 8px', borderRadius: '10px' }}>{dayFixtures.length} {dayFixtures.length === 1 ? 'match' : 'matches'}</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--card-raised)', padding: '2px 8px', borderRadius: '10px' }}>{dayFixtures.length} {dayFixtures.length === 1 ? 'match' : 'matches'}</span>
               </div>
               {dayFixtures.map(match => {
                 const fid = match.fixture_id || ('sd_' + match.sd_match_id)
@@ -139,74 +139,74 @@ export default function CompetitionFixturesPage({ params }) {
                 const drawSignal = gap < 5 ? 'mild' : 'weak'
                 const awaySignal = awayScore > homeScore + 15 ? 'strong' : awayScore > homeScore + 5 ? 'mild' : 'weak'
                 return (
-                  <div key={fid} style={{ background: '#13131a', border: '1px solid ' + (badge ? badge.colour + '40' : '#2a2a3a'), borderRadius: '8px', marginBottom: '8px', overflow: 'hidden' }}>
+                  <div key={fid} style={{ background: 'var(--card)', border: '1px solid ' + (badge ? badge.colour + '40' : 'var(--border)'), borderRadius: '8px', marginBottom: '8px', overflow: 'hidden' }}>
                     <div onClick={() => toggle(fid)} style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '4px' }}>
                           {match.group_id && <span style={{ fontSize: '10px', background: colour + '30', color: colour, padding: '1px 6px', borderRadius: '8px', fontWeight: 700 }}>Group {match.group_id}</span>}
                           <span style={{ fontWeight: 600, fontSize: '14px' }}>{match.home_team}</span>
-                          <span style={{ color: '#4b5563', fontSize: '12px' }}>vs</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>vs</span>
                           <span style={{ fontWeight: 600, fontSize: '14px' }}>{match.away_team}</span>
                         </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{formatDate(date)} — {formatKO(match.kickoff_time)}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatDate(date)} — {formatKO(match.kickoff_time)}</div>
                       </div>
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
                         {badge && <span style={{ background: badge.colour + '20', color: badge.colour, fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px' }}>{badge.label}</span>}
-                        {topScore > 0 && <div style={{ textAlign: 'right' }}><div style={{ fontSize: '18px', fontWeight: 900, color: badge ? badge.colour : '#9ca3af', lineHeight: 1 }}>{Math.round(topScore)}</div><div style={{ fontSize: '10px', color: '#4b5563' }}>score</div></div>}
-                        <span style={{ color: '#6b7280' }}>{isOpen ? '▲' : '▼'}</span>
+                        {topScore > 0 && <div style={{ textAlign: 'right' }}><div style={{ fontSize: '18px', fontWeight: 900, color: badge ? badge.colour : 'var(--text-secondary)', lineHeight: 1 }}>{Math.round(topScore)}</div><div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>score</div></div>}
+                        <span style={{ color: 'var(--text-muted)' }}>{isOpen ? '▲' : '▼'}</span>
                       </div>
                     </div>
                     {isOpen && (
-                      <div style={{ borderTop: '1px solid #2a2a3a', padding: '16px' }}>
+                      <div style={{ borderTop: '1px solid var(--border)', padding: '16px' }}>
                         {match.score ? (
                           <>
                             {/* Engine scores */}
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                              <div style={{ flex: 1, background: '#1c1c28', borderRadius: '6px', padding: '12px', textAlign: 'center', border: homeScore > awayScore ? '1px solid #22c55e40' : '1px solid transparent' }}>
-                                <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '4px' }}>HOME ENGINE</div>
-                                <div style={{ fontSize: '28px', fontWeight: 900, color: homeScore > awayScore ? '#22c55e' : '#e8e8f0' }}>{Math.round(homeScore)}</div>
-                                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{match.home_team}</div>
+                              <div style={{ flex: 1, background: 'var(--card-raised)', borderRadius: '6px', padding: '12px', textAlign: 'center', border: homeScore > awayScore ? '1px solid var(--win)40' : '1px solid transparent' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>HOME ENGINE</div>
+                                <div style={{ fontSize: '28px', fontWeight: 900, color: homeScore > awayScore ? 'var(--win)' : 'var(--text)' }}>{Math.round(homeScore)}</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{match.home_team}</div>
                               </div>
-                              <div style={{ flex: 1, background: '#1c1c28', borderRadius: '6px', padding: '12px', textAlign: 'center', border: awayScore > homeScore ? '1px solid #22c55e40' : '1px solid transparent' }}>
-                                <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '4px' }}>AWAY ENGINE</div>
-                                <div style={{ fontSize: '28px', fontWeight: 900, color: awayScore > homeScore ? '#22c55e' : '#e8e8f0' }}>{Math.round(awayScore)}</div>
-                                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{match.away_team}</div>
+                              <div style={{ flex: 1, background: 'var(--card-raised)', borderRadius: '6px', padding: '12px', textAlign: 'center', border: awayScore > homeScore ? '1px solid var(--win)40' : '1px solid transparent' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>AWAY ENGINE</div>
+                                <div style={{ fontSize: '28px', fontWeight: 900, color: awayScore > homeScore ? 'var(--win)' : 'var(--text)' }}>{Math.round(awayScore)}</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{match.away_team}</div>
                               </div>
                             </div>
                             {/* Summary */}
-                            <div style={{ background: '#1c1c28', borderRadius: '6px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px' }}>
+                            <div style={{ background: 'var(--card-raised)', borderRadius: '6px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px' }}>
                               {gap < 8
                                 ? <span style={{ color: '#f59e0b' }}>Close contest — only {Math.round(gap)} point gap. Treat all markets with caution.</span>
-                                : <span>Engine favours <span style={{ color: '#22c55e', fontWeight: 700 }}>{homeScore > awayScore ? match.home_team : match.away_team}</span> — {Math.round(gap)} point gap</span>
+                                : <span>Engine favours <span style={{ color: 'var(--win)', fontWeight: 700 }}>{homeScore > awayScore ? match.home_team : match.away_team}</span> — {Math.round(gap)} point gap</span>
                               }
                             </div>
                             {/* Match result */}
                             <div style={{ marginBottom: '12px' }}>
-                              <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px', fontWeight: 600 }}>MATCH RESULT</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>MATCH RESULT</div>
                               <div style={{ display: 'flex', gap: '6px' }}>
                                 {[
                                   { label: match.home_team + ' Win', dec: homeWinDec, signal: homeSignal, fallbackDec: homeScore > awayScore ? (gap > 15 ? 1.6 : 2.0) : 3.2 },
                                   { label: 'Draw', dec: drawDec, signal: drawSignal, fallbackDec: gap < 5 ? 3.0 : 3.8 },
                                   { label: match.away_team + ' Win', dec: awayWinDec, signal: awaySignal, fallbackDec: awayScore > homeScore ? (gap > 15 ? 1.6 : 2.0) : 3.2 }
                                 ].map(p => (
-                                  <div key={p.label} style={{ flex: 1, background: p.signal === 'strong' ? '#0F6E5620' : '#1c1c28', border: '1px solid ' + (p.signal === 'strong' ? '#0F6E5660' : '#2a2a3a'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '10px', color: '#9ca3af', marginBottom: '4px' }}>{p.label}</div>
+                                  <div key={p.label} style={{ flex: 1, background: p.signal === 'strong' ? 'var(--primary)20' : 'var(--card-raised)', border: '1px solid ' + (p.signal === 'strong' ? 'var(--primary)60' : 'var(--border)'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>{p.label}</div>
                                     <div style={{ fontSize: '15px', fontWeight: 700 }}>{decToFrac(p.dec || p.fallbackDec)}</div>
-                                    {p.signal === 'strong' && <div style={{ fontSize: '9px', color: '#22c55e', fontWeight: 700, marginTop: '2px' }}>ENGINE PICK</div>}
+                                    {p.signal === 'strong' && <div style={{ fontSize: '9px', color: 'var(--win)', fontWeight: 700, marginTop: '2px' }}>ENGINE PICK</div>}
                                   </div>
                                 ))}
                               </div>
                             </div>
                             {/* Goals */}
                             <div style={{ marginBottom: '12px' }}>
-                              <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px', fontWeight: 600 }}>GOALS ({ouTotal} line)</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>GOALS ({ouTotal} line)</div>
                               <div style={{ display: 'flex', gap: '6px' }}>
                                 {[
                                   { label: 'Over ' + ouTotal, dec: overDec, signal: (homeScore + awayScore) > 110 ? 'strong' : 'weak', fallbackDec: 1.9 },
                                   { label: 'Under ' + ouTotal, dec: underDec, signal: (homeScore + awayScore) < 96 ? 'strong' : 'weak', fallbackDec: 1.9 }
                                 ].map(p => (
-                                  <div key={p.label} style={{ flex: 1, background: p.signal === 'strong' ? '#185FA520' : '#1c1c28', border: '1px solid ' + (p.signal === 'strong' ? '#185FA560' : '#2a2a3a'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '10px', color: '#9ca3af', marginBottom: '4px' }}>{p.label}</div>
+                                  <div key={p.label} style={{ flex: 1, background: p.signal === 'strong' ? '#185FA520' : 'var(--card-raised)', border: '1px solid ' + (p.signal === 'strong' ? '#185FA560' : 'var(--border)'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>{p.label}</div>
                                     <div style={{ fontSize: '15px', fontWeight: 700 }}>{decToFrac(p.dec || p.fallbackDec)}</div>
                                     {p.signal === 'strong' && <div style={{ fontSize: '9px', color: '#4d9fff', fontWeight: 700, marginTop: '2px' }}>ENGINE PICK</div>}
                                   </div>
@@ -215,17 +215,17 @@ export default function CompetitionFixturesPage({ params }) {
                             </div>
                           </>
                         ) : (
-                          <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '12px' }}>Engine score not yet calculated. Run Score from Admin panel.</div>
+                          <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '12px' }}>Engine score not yet calculated. Run Score from Admin panel.</div>
                         )}
                         {/* Bookmakers */}
-                        <div style={{ borderTop: '1px solid #1c1c28', paddingTop: '12px' }}>
-                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '6px' }}>BET WITH:</div>
+                        <div style={{ borderTop: '1px solid var(--card-raised)', paddingTop: '12px' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>BET WITH:</div>
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                             {['Bet365','William Hill','Ladbrokes','Coral','Paddy Power','Betfred'].map(name => (
-                              <a key={name} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#1c1c28', border: '1px solid #2a2a3a', color: '#9ca3af', padding: '5px 12px', borderRadius: '4px', fontSize: '12px' }}>{name}</a>
+                              <a key={name} href='#' target='_blank' rel='noopener noreferrer' style={{ background: 'var(--card-raised)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '5px 12px', borderRadius: '4px', fontSize: '12px' }}>{name}</a>
                             ))}
                           </div>
-                          <div style={{ marginTop: '8px', fontSize: '11px', color: '#4b5563' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
+                          <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
                         </div>
                       </div>
                     )}
@@ -236,8 +236,8 @@ export default function CompetitionFixturesPage({ params }) {
           )
         })
       )}
-      <div style={{ marginTop: '24px', fontSize: '12px', color: '#4b5563', textAlign: 'center' }}>
-        18+ only. Gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#6b7280' }}>BeGambleAware.org</a>
+      <div style={{ marginTop: '24px', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+        18+ only. Gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: 'var(--text-muted)' }}>BeGambleAware.org</a>
       </div>
     </div>
   )

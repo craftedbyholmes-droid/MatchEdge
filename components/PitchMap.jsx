@@ -38,10 +38,10 @@ export default function PitchMap({ homeLineup, awayLineup, homeTeam, awayTeam, f
     <div style={{ width: '100%', maxWidth: '520px', margin: '0 auto' }}>
       {/* Team labels */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px', fontWeight: 700 }}>
-        <span style={{ color: '#22c55e' }}>{homeTeam} {formation_home && formation_home !== 'None' ? '(' + formation_home + ')' : ''}</span>
+        <span style={{ color: 'var(--win)' }}>{homeTeam} {formation_home && formation_home !== 'None' ? '(' + formation_home + ')' : ''}</span>
         <span style={{ color: '#4d9fff' }}>{awayTeam} {formation_away && formation_away !== 'None' ? '(' + formation_away + ')' : ''}</span>
       </div>
-      <svg viewBox='0 0 100 110' style={{ width: '100%', background: '#1a3a1a', borderRadius: '8px', border: '1px solid #2a2a3a' }}>
+      <svg viewBox='0 0 100 110' style={{ width: '100%', background: '#1a3a1a', borderRadius: '8px', border: '1px solid var(--border)' }}>
         {/* Pitch markings */}
         <rect x='5' y='5' width='90' height='100' fill='none' stroke='#ffffff20' strokeWidth='0.5' />
         <line x1='5' y1='55' x2='95' y2='55' stroke='#ffffff20' strokeWidth='0.5' />
@@ -62,7 +62,7 @@ export default function PitchMap({ homeLineup, awayLineup, homeTeam, awayTeam, f
               cx={p.x}
               cy={p.y}
               r='4.2'
-              fill={p.side === 'home' ? '#22c55e' : '#4d9fff'}
+              fill={p.side === 'home' ? 'var(--win)' : '#4d9fff'}
               stroke={p.side === 'home' ? '#16a34a' : '#2563eb'}
               strokeWidth='0.6'
               opacity='0.9'
@@ -84,8 +84,8 @@ export default function PitchMap({ homeLineup, awayLineup, homeTeam, awayTeam, f
         <text x='50' y='52' textAnchor='middle' fontSize='3' fill='#ffffff30'>▼ attack</text>
         <text x='50' y='61' textAnchor='middle' fontSize='3' fill='#ffffff30'>▲ attack</text>
       </svg>
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '8px', fontSize: '11px', color: '#6b7280' }}>
-        <span><span style={{ color: '#22c55e' }}>●</span> {homeTeam}</span>
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+        <span><span style={{ color: 'var(--win)' }}>●</span> {homeTeam}</span>
         <span><span style={{ color: '#4d9fff' }}>●</span> {awayTeam}</span>
       </div>
     </div>

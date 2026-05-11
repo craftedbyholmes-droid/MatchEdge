@@ -1,6 +1,55 @@
+:root {
+  --bg:          #0B0E11;
+  --card:        #161B22;
+  --card-raised: #1E2530;
+  --border:      #2A3441;
+  --primary:     #00C896;
+  --primary-dim: #00C89620;
+  --gold:        #F0B90B;
+  --gold-dim:    #F0B90B20;
+  --danger:      #ef4444;
+  --text:        #E6EDF3;
+  --text-secondary: #8B949E;
+  --text-muted:  #484F58;
+  --win:         #00C896;
+  --loss:        #ef4444;
+  --void:        #F0B90B;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { overflow-x: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #e8e8f0; font-size: 16px; line-height: 1.5; }
-input, textarea, select, button { font-size: 16px; font-family: inherit; }
-.container { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
 a { color: inherit; text-decoration: none; }
-:root { --gordon: #0F6E56; --stan: #185FA5; --pez: #993C1D; --gold: #f0c040; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --surface: #13131a; --surface2: #1c1c28; --border: #2a2a3a; --text-muted: #6b7280; }
+button { font-family: inherit; }
+input, textarea, select {
+  font-family: inherit;
+  font-size: 16px;
+  background: var(--card-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+}
+
+@keyframes me-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes me-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes me-ring {
+  from { stroke-dashoffset: 251; }
+  to   { stroke-dashoffset: var(--target-offset); }
+}

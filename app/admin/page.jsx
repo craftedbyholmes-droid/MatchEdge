@@ -119,21 +119,21 @@ export default function AdminPage() {
   }
 
   if (!user || user.email !== ADMIN_EMAIL) {
-    return <div style={{ padding: '40px', color: '#6b7280', textAlign: 'center' }}>Access restricted.</div>
+    return <div style={{ padding: '40px', color: 'var(--text-muted)', textAlign: 'center' }}>Access restricted.</div>
   }
 
   const tabStyle = (key) => ({
     padding: '8px 18px',
-    background: activeSection === key ? '#0F6E56' : '#1c1c28',
+    background: activeSection === key ? 'var(--primary)' : 'var(--card-raised)',
     color: '#fff',
-    border: '1px solid ' + (activeSection === key ? '#0F6E56' : '#2a2a3a'),
+    border: '1px solid ' + (activeSection === key ? 'var(--primary)' : 'var(--border)'),
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: 600
   })
 
-  const logColour = (type) => type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#9ca3af'
+  const logColour = (type) => type === 'error' ? '#ef4444' : type === 'success' ? 'var(--win)' : 'var(--text-secondary)'
 
   return (
     <div style={{ paddingBottom: '60px' }}>
@@ -147,22 +147,22 @@ export default function AdminPage() {
       </div>
 
       {activeSection === 'crons' && (
-        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
           <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>Cron Controls</div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Run Standings first, then Score. Order matters.</div>
-          <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#1c1c28', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', border: '1px solid #22c55e30' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Run Standings first, then Score. Order matters.</div>
+          <div style={{ marginBottom: '16px', padding: '12px 16px', background: 'var(--card-raised)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', border: '1px solid var(--win)30' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '13px', color: '#22c55e' }}>Standings + Score (recommended)</div>
-              <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>Fetches all league tables then runs engine on all fixtures</div>
+              <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--win)' }}>Standings + Score (recommended)</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Fetches all league tables then runs engine on all fixtures</div>
             </div>
-            <button onClick={runStandingsThenScore} disabled={!!running} style={{ padding: '8px 20px', background: '#22c55e', color: '#0a0a0f', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '13px', cursor: running ? 'not-allowed' : 'pointer', opacity: running ? 0.6 : 1 }}>
+            <button onClick={runStandingsThenScore} disabled={!!running} style={{ padding: '8px 20px', background: 'var(--win)', color: '#0B0E11', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '13px', cursor: running ? 'not-allowed' : 'pointer', opacity: running ? 0.6 : 1 }}>
               {running === 'Standings + Score' ? 'Running...' : 'Run Both'}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {CRON_BUTTONS.map(btn => (
               <button key={btn.label} onClick={() => runCron(btn.path, btn.label)} disabled={!!running} title={btn.desc}
-                style={{ padding: '8px 14px', background: running === btn.label ? '#0F6E56' : '#1c1c28', color: '#fff', border: '1px solid #2a2a3a', borderRadius: '6px', cursor: running ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: running && running !== btn.label ? 0.5 : 1 }}>
+                style={{ padding: '8px 14px', background: running === btn.label ? 'var(--primary)' : 'var(--card-raised)', color: '#fff', border: '1px solid var(--border)', borderRadius: '6px', cursor: running ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: running && running !== btn.label ? 0.5 : 1 }}>
                 {running === btn.label ? 'Running...' : btn.label}
               </button>
             ))}
@@ -171,73 +171,73 @@ export default function AdminPage() {
       )}
 
       {activeSection === 'gifted' && (
-        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
           <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '16px' }}>Gifted Access</div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
             <input value={giftEmail} onChange={e => setGiftEmail(e.target.value)} placeholder='user@email.com'
-              style={{ flex: 2, minWidth: '200px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+              style={{ flex: 2, minWidth: '200px', padding: '8px 12px', background: 'var(--card-raised)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
             <input type='date' value={giftExpiry} onChange={e => setGiftExpiry(e.target.value)}
-              style={{ flex: 1, minWidth: '140px', padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+              style={{ flex: 1, minWidth: '140px', padding: '8px 12px', background: 'var(--card-raised)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={() => grantAccess('grant')} style={{ padding: '8px 20px', background: '#0F6E56', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Grant Edge</button>
+            <button onClick={() => grantAccess('grant')} style={{ padding: '8px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Grant Edge</button>
             <button onClick={() => grantAccess('revoke')} style={{ padding: '8px 20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Revoke</button>
           </div>
-          {giftMsg && <div style={{ marginTop: '10px', fontSize: '13px', color: '#9ca3af' }}>{giftMsg}</div>}
+          {giftMsg && <div style={{ marginTop: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{giftMsg}</div>}
         </div>
       )}
 
       {activeSection === 'daterange' && (
-        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
           <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>Fetch Fixtures by Date Range</div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Backfill fixtures for a specific date range.</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Backfill fixtures for a specific date range.</div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
             <input type='date' value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-              style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+              style={{ padding: '8px 12px', background: 'var(--card-raised)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
             <input type='date' value={dateTo} onChange={e => setDateTo(e.target.value)}
-              style={{ padding: '8px 12px', background: '#1c1c28', border: '1px solid #2a2a3a', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
+              style={{ padding: '8px 12px', background: 'var(--card-raised)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '14px' }} />
             <button onClick={fetchByDateRange} style={{ padding: '8px 20px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Fetch</button>
           </div>
-          {fetchMsg && <div style={{ fontSize: '12px', color: '#9ca3af', fontFamily: 'monospace', wordBreak: 'break-all' }}>{fetchMsg}</div>}
+          {fetchMsg && <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontFamily: 'monospace', wordBreak: 'break-all' }}>{fetchMsg}</div>}
         </div>
       )}
 
       {activeSection === 'weights' && (
-        <div style={{ background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
           <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '6px' }}>Weight Adaptations</div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Generated weekly by calibration cron. Approve, override or reject each suggestion.</div>
-          {!weightData ? <div style={{ color: '#6b7280' }}>Loading...</div>
-          : weightData.pending?.length === 0 ? <div style={{ color: '#6b7280', fontSize: '13px' }}>No pending suggestions. Run Calibrate to generate new ones.</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Generated weekly by calibration cron. Approve, override or reject each suggestion.</div>
+          {!weightData ? <div style={{ color: 'var(--text-muted)' }}>Loading...</div>
+          : weightData.pending?.length === 0 ? <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No pending suggestions. Run Calibrate to generate new ones.</div>
           : weightData.pending?.map(w => (
-            <div key={w.id} style={{ background: '#1c1c28', borderRadius: '6px', padding: '14px', marginBottom: '10px' }}>
+            <div key={w.id} style={{ background: 'var(--card-raised)', borderRadius: '6px', padding: '14px', marginBottom: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
                 <div>
                   <span style={{ fontWeight: 700 }}>{w.league_name}</span>
-                  <span style={{ color: '#6b7280', margin: '0 8px' }}>-</span>
-                  <span style={{ color: '#9ca3af' }}>{w.factor_name}</span>
+                  <span style={{ color: 'var(--text-muted)', margin: '0 8px' }}>-</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{w.factor_name}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
-                  <span style={{ color: '#6b7280' }}>Current: <b style={{ color: '#e8e8f0' }}>{(w.current_weight * 100).toFixed(1)}%</b></span>
-                  <span style={{ color: '#6b7280' }}>Suggested: <b style={{ color: '#22c55e' }}>{(w.suggested_weight * 100).toFixed(1)}%</b></span>
-                  <span style={{ color: '#4b5563' }}>({w.sample_size} matches)</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Current: <b style={{ color: 'var(--text)' }}>{(w.current_weight * 100).toFixed(1)}%</b></span>
+                  <span style={{ color: 'var(--text-muted)' }}>Suggested: <b style={{ color: 'var(--win)' }}>{(w.suggested_weight * 100).toFixed(1)}%</b></span>
+                  <span style={{ color: 'var(--text-muted)' }}>({w.sample_size} matches)</span>
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '10px' }}>{w.reasoning}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>{w.reasoning}</div>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <button onClick={() => reviewWeight(w.id, 'approve', null)} style={{ padding: '5px 14px', background: '#0F6E56', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Approve</button>
+                <button onClick={() => reviewWeight(w.id, 'approve', null)} style={{ padding: '5px 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Approve</button>
                 <button onClick={() => reviewWeight(w.id, 'reject', null)} style={{ padding: '5px 14px', background: '#ef444420', color: '#ef4444', border: '1px solid #ef444440', borderRadius: '4px', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}>Reject</button>
-                <input placeholder='Override %' style={{ width: '90px', padding: '5px 8px', background: '#13131a', border: '1px solid #2a2a3a', borderRadius: '4px', color: '#fff', fontSize: '12px' }}
+                <input placeholder='Override %' style={{ width: '90px', padding: '5px 8px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '4px', color: '#fff', fontSize: '12px' }}
                   onKeyDown={e => { if (e.key === 'Enter') reviewWeight(w.id, 'override', parseFloat(e.target.value) / 100) }} />
               </div>
             </div>
           ))}
           {weightData?.leagueStats && Object.keys(weightData.leagueStats).length > 0 && (
             <div style={{ marginTop: '20px' }}>
-              <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: '#9ca3af' }}>PREDICTION ACCURACY BY LEAGUE</div>
+              <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: 'var(--text-secondary)' }}>PREDICTION ACCURACY BY LEAGUE</div>
               {Object.entries(weightData.leagueStats).map(([league, stats]) => (
-                <div key={league} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #1c1c28', fontSize: '13px' }}>
+                <div key={league} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--card-raised)', fontSize: '13px' }}>
                   <span>{league}</span>
-                  <span style={{ color: stats.correct / stats.total > 0.6 ? '#22c55e' : '#9ca3af' }}>
+                  <span style={{ color: stats.correct / stats.total > 0.6 ? 'var(--win)' : 'var(--text-secondary)' }}>
                     {stats.correct}/{stats.total} ({Math.round(stats.correct / stats.total * 100)}%)
                   </span>
                 </div>
@@ -247,8 +247,8 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div style={{ background: '#0d0d14', border: '1px solid #1c1c28', borderRadius: '8px', padding: '16px' }}>
-        <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: '#6b7280' }}>ACTIVITY LOG</div>
+      <div style={{ background: '#0B0E11', border: '1px solid var(--card-raised)', borderRadius: '8px', padding: '16px' }}>
+        <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: 'var(--text-muted)' }}>ACTIVITY LOG</div>
         {log.length === 0
           ? <div style={{ color: '#374151', fontSize: '12px' }}>No activity yet. Run a cron above.</div>
           : [...log].reverse().map((entry, i) => (
