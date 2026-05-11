@@ -20,6 +20,7 @@ const CRON_BUTTONS = [
   { label: 'Settle',          path: '/api/cron/settle',       desc: 'Settle picks and update P&L' },
   { label: 'Rollup',          path: '/api/cron/rollup',       desc: 'Write match events to player stats' },
   { label: 'Calibrate',       path: '/api/cron/calibrate',    desc: 'Generate weekly weight suggestions' },
+  { label: 'Seed World Cup', path: '/api/admin/seed-worldcup', desc: 'Pull all WC fixtures from SoccerData and seed DB' },
   { label: 'Fetch Results', path: '/api/admin/fetch-results', desc: 'Fetch scores for past matches and mark FT' },
   { label: 'Midnight Chain',  path: '/api/cron/midnight',     desc: 'Full midnight pipeline' }
 ]
