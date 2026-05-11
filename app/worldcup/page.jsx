@@ -1,193 +1,236 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { usePlan } from '@/lib/usePlan'
-import Link from 'next/link'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
+const GBP = String.fromCharCode(163)
 const CONF_COLOURS = {
-  'UEFA': '#003399', 'CONMEBOL': '#006400', 'CONCACAF': '#8B0000',
-  'CAF': '#8B6914', 'AFC': '#006494', 'OFC': '#2d6a4f'
+  UEFA: '#003399', CONMEBOL: '#006847', CONCACAF: '#BF0A30',
+  CAF: '#009A44', AFC: '#DA0000', OFC: '#00843D'
 }
 
-const GROUP_ORDER = ['A','B','C','D','E','F','G','H','I','J','K','L']
+// Engine-based group winner prediction
+function predictWinner(groupTeams, groupMatches) {
+  if (!groupMatches.some(m => m.score)) return null
+  // Sum engine scores across all matches for each team
+  const teamScores = {}
+  for (const match of groupMatches) {
+    if (!match.score) continue
+    const h = match.home_team_id
+    const a = match.away_team_id
+    if (!teamScores[h]) teamScores[h] = 0
+    if (!teamScores[a]) teamScores[a] = 0
+    teamScores[h] += match.score.total_home || 0
+    teamScores[a] += match.score.total_away || 0
+  }
+  const sorted = Object.entries(teamScores).sort((a, b) => b[1] - a[1])
+  return sorted[0]?.[0] || null
+}
+
+function formatKO(kt) {
+  if (!kt) return ''
+  const d = new Date(kt)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' +
+    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ' BST'
+}
+
+function ScoreBadge({ score, isHome }) {
+  if (!score) return null
+  const val = Math.round(isHome ? score.total_home : score.total_away)
+  const col = val >= 70 ? '#00C896' : val >= 55 ? '#F0B90B' : '#8B949E'
+  return <span style={{ fontSize: '12px', fontWeight: 700, color: col, marginLeft: '6px' }}>({val})</span>
+}
 
 export default function WorldCupPage() {
-  const { plan } = usePlan()
-  const [groups, setGroups] = useState([])
-  const [matches, setMatches] = useState([])
-  const [picks, setPicks] = useState([])
-  const [activeStage, setActiveStage] = useState('group')
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [activeGroup, setActiveGroup] = useState('A')
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/worldcup/groups').then(r => r.json()),
-      fetch('/api/worldcup/matches').then(r => r.json()),
-      fetch('/api/worldcup/picks').then(r => r.json())
-    ]).then(([g, m, p]) => {
-      setGroups(Array.isArray(g) ? g : [])
-      setMatches(Array.isArray(m) ? m : [])
-      setPicks(Array.isArray(p) ? p : [])
+    fetch('/api/worldcup/data').then(r => r.json()).then(d => {
+      setData(d)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
 
-  const stages = [...new Set(matches.map(m => m.stage))].sort()
-  const filteredMatches = matches.filter(m => m.stage === activeStage || activeStage === 'all')
+  const daysUntil = Math.ceil((new Date('2026-06-11T21:00:00Z') - new Date()) / 86400000)
 
-  function formatKickoff(kt) {
-    if (!kt) return 'TBC'
-    return new Date(kt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const groups = data?.groups || []
+  const allTeams = data?.teams || []
+  const allMatches = data?.matches || []
+
+  function getGroupTeams(gId) {
+    return allTeams
+      .filter(t => t.group_id === gId)
+      .sort((a, b) => b.points - a.points || (b.goals_for - b.goals_against) - (a.goals_for - a.goals_against) || b.goals_for - a.goals_for)
   }
 
-  const PERSONA_COLOUR = { gordon: '#00C896', stan: '#185FA5', pez: '#993C1D' }
-  const PERSONA_NAME = { gordon: 'Gaffer Gordon', stan: 'Stats Stan', pez: 'Punter Pez' }
+  function getGroupMatches(gId) {
+    return allMatches.filter(m => m.group_id === gId)
+  }
 
   return (
     <div style={{ paddingBottom: '60px' }}>
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #0a2463 0%, #1b4332 100%)', borderRadius: '10px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: '#F0B90B', letterSpacing: '2px', marginBottom: '8px' }}>FIFA</div>
-        <h1 style={{ fontSize: '28px', fontWeight: 900, marginBottom: '6px' }}>World Cup 2026</h1>
-        <p style={{ color: '#8B949E', fontSize: '14px', marginBottom: '12px' }}>USA · Canada · Mexico · 11 June — 19 July 2026</p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px 16px', fontSize: '13px' }}>48 Teams</div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px 16px', fontSize: '13px' }}>12 Groups</div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px 16px', fontSize: '13px' }}>104 Matches</div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px 16px', fontSize: '13px' }}>3 Host Nations</div>
+      {/* Hero */}
+      <div style={{ background: 'linear-gradient(135deg, #0a2463 0%, #1b4332 100%)', borderRadius: '12px', padding: '32px 24px', marginBottom: '24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '12px', fontWeight: 700, color: '#F0B90B', letterSpacing: '3px', marginBottom: '8px' }}>FIFA</div>
+        <div style={{ fontSize: '32px', fontWeight: 900, marginBottom: '8px' }}>World Cup 2026</div>
+        <div style={{ fontSize: '14px', color: '#8B949E', marginBottom: '20px' }}>USA - Canada - Mexico - 11 June to 19 July 2026</div>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {[['48 Teams',''], ['12 Groups',''], ['104 Matches',''], ['3 Host Nations','']].map(([v]) => (
+            <div key={v} style={{ background: 'rgba(255,255,255,0.1)', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 600 }}>{v}</div>
+          ))}
         </div>
       </div>
 
       {/* Countdown */}
-      <CountdownBanner />
+      <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '10px', padding: '24px', textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ fontSize: '52px', fontWeight: 900, color: '#F0B90B', lineHeight: 1 }}>{daysUntil}</div>
+        <div style={{ fontSize: '14px', color: '#8B949E', marginTop: '6px' }}>days until kickoff - Mexico vs South Africa opens the tournament</div>
+      </div>
 
-      {/* Tipster picks - paid only */}
-      {picks.length > 0 && (
-        <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px' }}>Tipster Picks</h2>
-          {plan === 'free' ? (
-            <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#8B949E', marginBottom: '12px' }}>Upgrade to see World Cup tipster selections</div>
-              <a href='/pricing' style={{ background: '#F0B90B', color: '#0B0E11', padding: '8px 20px', borderRadius: '6px', fontWeight: 700, fontSize: '13px' }}>Try Today £1.99</a>
-            </div>
-          ) : (
-            picks.map(pick => (
-              <div key={pick.pick_id} style={{ background: '#161B22', border: '1px solid ' + (PERSONA_COLOUR[pick.persona] || '#2A3441') + '30', borderRadius: '8px', padding: '14px 16px', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: PERSONA_COLOUR[pick.persona], fontWeight: 700, fontSize: '13px' }}>{PERSONA_NAME[pick.persona]}</span>
-                  {pick.is_best_pick && <span style={{ fontSize: '10px', background: '#F0B90B20', color: '#F0B90B', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>BEST PICK</span>}
-                </div>
-                <div style={{ fontWeight: 600, fontSize: '14px' }}>{pick.selection} <span style={{ color: '#8B949E', fontWeight: 400 }}>@ {pick.odds_fractional}</span></div>
-                {pick.tip_text && <div style={{ fontSize: '12px', color: '#484F58', fontStyle: 'italic', marginTop: '4px' }}>{pick.tip_text}</div>}
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      {loading ? <LoadingSpinner message='Loading groups and fixtures...' /> : (
+        <>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px' }}>Group Stage</h2>
 
-      {/* Group tables */}
-      <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>Group Stage</h2>
-      {loading ? (
-        <div style={{ color: '#484F58', textAlign: 'center', padding: '40px 0' }}>Loading...</div>
-      ) : groups.length === 0 ? (
-        <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
-          <div style={{ fontSize: '14px', color: '#8B949E', marginBottom: '8px' }}>Group stage data will populate as the tournament approaches.</div>
-          <div style={{ fontSize: '13px', color: '#484F58' }}>Tournament starts 11 June 2026. Check back closer to the event.</div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {groups.map(group => (
-            <div key={group.group_id} style={{ flex: '1 1 300px', background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', overflow: 'hidden' }}>
-              <div style={{ background: '#1E2530', padding: '10px 14px', fontWeight: 700, fontSize: '14px', borderBottom: '1px solid #2A3441' }}>
-                {group.group_name}
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                <thead>
-                  <tr style={{ color: '#484F58', borderBottom: '1px solid #2A3441' }}>
-                    <th style={{ padding: '6px 14px', textAlign: 'left', fontWeight: 500 }}>Team</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 500 }}>P</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 500 }}>W</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 500 }}>D</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 500 }}>L</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 500 }}>GD</th>
-                    <th style={{ padding: '6px 14px', textAlign: 'center', fontWeight: 700 }}>Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(group.teams || []).sort((a,b) => b.points - a.points || (b.goals_for-b.goals_against) - (a.goals_for-a.goals_against)).map((team, i) => (
-                    <tr key={team.team_id} style={{ borderBottom: '1px solid #1E2530', background: i < 2 ? '#00C89610' : 'transparent' }}>
-                      <td style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {i < 2 && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#00C896', flexShrink: 0, display: 'inline-block' }} />}
-                        <span style={{ fontWeight: i < 2 ? 600 : 400 }}>{team.name}</span>
-                        <span style={{ fontSize: '10px', color: CONF_COLOURS[team.confederation] || '#484F58', background: (CONF_COLOURS[team.confederation] || '#484F58') + '20', padding: '1px 5px', borderRadius: '8px' }}>{team.confederation}</span>
-                      </td>
-                      <td style={{ padding: '8px', textAlign: 'center', color: '#8B949E' }}>{team.played}</td>
-                      <td style={{ padding: '8px', textAlign: 'center', color: '#8B949E' }}>{team.wins}</td>
-                      <td style={{ padding: '8px', textAlign: 'center', color: '#8B949E' }}>{team.draws}</td>
-                      <td style={{ padding: '8px', textAlign: 'center', color: '#8B949E' }}>{team.losses}</td>
-                      <td style={{ padding: '8px', textAlign: 'center', color: '#8B949E' }}>{(team.goals_for - team.goals_against) >= 0 ? '+' : ''}{team.goals_for - team.goals_against}</td>
-                      <td style={{ padding: '8px 14px', textAlign: 'center', fontWeight: 800, color: '#E6EDF3' }}>{team.points}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Matches */}
-      {matches.length > 0 && (
-        <div style={{ marginTop: '32px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '14px' }}>Fixtures</h2>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
-            {['all', ...stages].map(s => (
-              <button key={s} onClick={() => setActiveStage(s)} style={{ padding: '5px 12px', background: activeStage === s ? '#00C896' : '#1E2530', color: '#fff', border: '1px solid ' + (activeStage === s ? '#00C896' : '#2A3441'), borderRadius: '20px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
-                {s === 'all' ? 'All Stages' : s}
+          {/* Group tabs */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            {groups.map(g => (
+              <button key={g.group_id} onClick={() => setActiveGroup(g.group_id)} style={{ padding: '6px 14px', background: activeGroup === g.group_id ? '#00C896' : '#161B22', color: activeGroup === g.group_id ? '#0B0E11' : '#8B949E', border: '1px solid ' + (activeGroup === g.group_id ? '#00C896' : '#2A3441'), borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+                {g.group_id}
               </button>
             ))}
           </div>
-          {filteredMatches.map(match => (
-            <div key={match.match_id} style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '12px 16px', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 600, fontSize: '14px' }}>{match.home_team || 'TBD'}</span>
-                    <span style={{ color: '#484F58' }}>vs</span>
-                    <span style={{ fontWeight: 600, fontSize: '14px' }}>{match.away_team || 'TBD'}</span>
+
+          {/* Active group */}
+          {(() => {
+            const gTeams = getGroupTeams(activeGroup)
+            const gMatches = getGroupMatches(activeGroup)
+            const predicted = predictWinner(gTeams, gMatches)
+            const hasScores = gMatches.some(m => m.score)
+            return (
+              <div>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                  {/* Standings table */}
+                  <div style={{ flex: '1 1 340px' }}>
+                    <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '10px', overflow: 'hidden' }}>
+                      <div style={{ background: '#1E2530', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontWeight: 800, fontSize: '15px' }}>Group {activeGroup}</div>
+                        {hasScores && predicted && (
+                          <div style={{ fontSize: '11px', color: '#F0B90B', fontWeight: 700 }}>ENGINE PREDICTS: {gTeams.find(t => t.team_id === predicted)?.name || predicted}</div>
+                        )}
+                      </div>
+                      <div style={{ padding: '0 8px 8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 32px 32px 32px 32px 48px 48px', gap: '0', padding: '8px 8px 4px', fontSize: '10px', color: '#484F58', fontWeight: 700, letterSpacing: '0.5px' }}>
+                          <div>TEAM</div><div style={{ textAlign: 'center' }}>P</div><div style={{ textAlign: 'center' }}>W</div><div style={{ textAlign: 'center' }}>D</div><div style={{ textAlign: 'center' }}>L</div><div style={{ textAlign: 'center' }}>GD</div><div style={{ textAlign: 'center' }}>PTS</div>
+                        </div>
+                        {gTeams.map((team, idx) => {
+                          const isWinner = team.team_id === predicted && hasScores
+                          const gd = (team.goals_for || 0) - (team.goals_against || 0)
+                          return (
+                            <div key={team.team_id} style={{ display: 'grid', gridTemplateColumns: '1fr 32px 32px 32px 32px 48px 48px', gap: '0', padding: '8px', background: isWinner ? '#00C89610' : idx % 2 === 0 ? '#13181f' : 'transparent', borderRadius: '6px', border: isWinner ? '1px solid #00C89640' : '1px solid transparent', marginBottom: '2px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {isWinner && <span style={{ fontSize: '9px', background: '#00C896', color: '#0B0E11', fontWeight: 800, padding: '1px 5px', borderRadius: '4px' }}>PICK</span>}
+                                {idx < 2 && !isWinner && <span style={{ width: '3px', height: '14px', background: '#00C896', borderRadius: '2px', flexShrink: 0, display: 'inline-block' }} />}
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '13px' }}>{team.name}</div>
+                                  <div style={{ fontSize: '10px', color: CONF_COLOURS[team.confederation] || '#484F58', fontWeight: 600 }}>{team.confederation}</div>
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'center', fontSize: '13px' }}>{team.played || 0}</div>
+                              <div style={{ textAlign: 'center', fontSize: '13px' }}>{team.wins || 0}</div>
+                              <div style={{ textAlign: 'center', fontSize: '13px' }}>{team.draws || 0}</div>
+                              <div style={{ textAlign: 'center', fontSize: '13px' }}>{team.losses || 0}</div>
+                              <div style={{ textAlign: 'center', fontSize: '13px', color: gd > 0 ? '#00C896' : gd < 0 ? '#ef4444' : '#8B949E' }}>{gd > 0 ? '+' : ''}{gd}</div>
+                              <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 800, color: (team.points || 0) > 0 ? '#E6EDF3' : '#484F58' }}>{team.points || 0}</div>
+                            </div>
+                          )
+                        })}
+                        <div style={{ fontSize: '11px', color: '#484F58', padding: '8px', borderTop: '1px solid #2A3441', marginTop: '4px' }}>
+                          Top 2 qualify automatically. 8 best third-place teams also advance.
+                          {!hasScores && <span style={{ color: '#F0B90B', marginLeft: '6px' }}>Engine picks available once scoring starts.</span>}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#484F58' }}>
-                    {match.stage}{match.group_id ? ' — Group ' + match.group_id : ''} · {match.venue || match.city || ''} · {formatKickoff(match.kickoff_time)}
+
+                  {/* Fixtures */}
+                  <div style={{ flex: '1 1 340px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '10px', color: '#8B949E' }}>FIXTURES</div>
+                    {gMatches.map(match => {
+                      const isFinished = match.status === 'FT'
+                      const hasScore = match.home_score !== null && isFinished
+                      const pred = match.score
+                      const favHome = pred && pred.total_home > pred.total_away
+                      const favAway = pred && pred.total_away > pred.total_home
+                      return (
+                        <div key={match.match_id} style={{ background: '#ffffff', border: '1px solid #e0e0e0', borderLeft: '3px solid ' + (isFinished ? '#2A3441' : '#00C896'), borderRadius: '8px', padding: '12px 14px', marginBottom: '8px', color: '#111' }}>
+                          {/* Teams + score */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                              <span style={{ fontWeight: favHome ? 800 : 600, fontSize: '14px' }}>{match.home_team}</span>
+                              {pred && <ScoreBadge score={pred} isHome={true} />}
+                            </div>
+                            {hasScore ? (
+                              <div style={{ fontSize: '18px', fontWeight: 900, padding: '0 12px', color: '#111' }}>{match.home_score} - {match.away_score}</div>
+                            ) : (
+                              <div style={{ fontSize: '12px', color: '#888', padding: '0 12px' }}>vs</div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end' }}>
+                              {pred && <ScoreBadge score={pred} isHome={false} />}
+                              <span style={{ fontWeight: favAway ? 800 : 600, fontSize: '14px' }}>{match.away_team}</span>
+                            </div>
+                          </div>
+                          {/* Date + venue */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#888' }}>
+                            <span>{formatKO(match.kickoff_time)}</span>
+                            <span>{match.venue || match.city}</span>
+                          </div>
+                          {/* Engine prediction */}
+                          {pred && !isFinished && (
+                            <div style={{ marginTop: '6px', fontSize: '11px', background: '#f0faf6', border: '1px solid #00C89640', borderRadius: '4px', padding: '4px 8px', color: '#007a5e', fontWeight: 600 }}>
+                              Engine: {favHome ? match.home_team : match.away_team} favoured ({Math.round(Math.abs((pred.total_home||0) - (pred.total_away||0)))}pt gap)
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
-                {match.status === 'FT' ? (
-                  <div style={{ fontWeight: 800, fontSize: '18px' }}>{match.home_score} — {match.away_score}</div>
-                ) : match.home_score != null ? (
-                  <div style={{ fontWeight: 800, fontSize: '18px', color: '#00C896' }}>{match.home_score} — {match.away_score}</div>
-                ) : null}
               </div>
-            </div>
-          ))}
-        </div>
+            )
+          })()}
+
+          {/* All groups overview grid */}
+          <h2 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px', marginTop: '8px' }}>All Groups Overview</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+            {groups.map(g => {
+              const gTeams = getGroupTeams(g.group_id)
+              const gMatches = getGroupMatches(g.group_id)
+              const predicted = predictWinner(gTeams, gMatches)
+              return (
+                <div key={g.group_id} onClick={() => setActiveGroup(g.group_id)} style={{ background: '#161B22', border: '1px solid ' + (activeGroup === g.group_id ? '#00C896' : '#2A3441'), borderRadius: '8px', padding: '14px', cursor: 'pointer' }}>
+                  <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '10px', color: activeGroup === g.group_id ? '#00C896' : '#E6EDF3' }}>Group {g.group_id}</div>
+                  {gTeams.map(team => (
+                    <div key={team.team_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #1E2530' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {team.team_id === predicted && <span style={{ width: '6px', height: '6px', background: '#00C896', borderRadius: '50%', display: 'inline-block', flexShrink: 0 }} />}
+                        {team.team_id !== predicted && <span style={{ width: '6px', height: '6px', background: 'transparent', display: 'inline-block', flexShrink: 0 }} />}
+                        <span style={{ fontSize: '13px', fontWeight: team.team_id === predicted ? 700 : 400, color: team.team_id === predicted ? '#E6EDF3' : '#8B949E' }}>{team.name}</span>
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: (team.points||0) > 0 ? '#E6EDF3' : '#484F58' }}>{team.points || 0}pts</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
 
-      <div style={{ marginTop: '32px', fontSize: '12px', color: '#484F58', textAlign: 'center', lineHeight: '1.8' }}>
-        18+ only. Please gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#484F58' }}>BeGambleAware.org</a>
+      <div style={{ marginTop: '40px', fontSize: '12px', color: '#484F58', textAlign: 'center', lineHeight: '1.8' }}>
+        Engine scores generate as fixtures are scored closer to kick-off.<br />
+        18+ only. Gamble responsibly. BeGambleAware.org
       </div>
-    </div>
-  )
-}
-
-function CountdownBanner() {
-  const [days, setDays] = useState(0)
-  useEffect(() => {
-    const wc = new Date('2026-06-11T20:00:00Z')
-    const diff = wc - new Date()
-    setDays(Math.max(0, Math.floor(diff / 86400000)))
-  }, [])
-  return (
-    <div style={{ background: '#161B22', border: '1px solid #F0B90B40', borderRadius: '8px', padding: '16px', marginBottom: '24px', textAlign: 'center' }}>
-      <div style={{ fontSize: '36px', fontWeight: 900, color: '#F0B90B' }}>{days}</div>
-      <div style={{ fontSize: '13px', color: '#8B949E' }}>days until kickoff — Mexico vs South Africa opens the tournament</div>
     </div>
   )
 }
