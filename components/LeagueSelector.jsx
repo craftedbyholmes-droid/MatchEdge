@@ -19,7 +19,7 @@ const CATEGORY_META = {
   international: { label: 'International',  colour: '#8B0000' }
 }
 
-export default function LeagueSelector({ showCounts = {}, mode = 'full' }) {
+export default function LeagueSelector({ showCounts = {}, catCounts = {}, mode = 'full' }) {
   const { activeLeague, setActiveLeague, activeCategory, setActiveCategory } = useLeague()
 
   return (

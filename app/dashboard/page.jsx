@@ -4,6 +4,7 @@ import { usePlan } from '@/lib/usePlan'
 import { useLeague } from '@/context/LeagueContext'
 import LeagueSelector from '@/components/LeagueSelector'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { getCategory, TOP_LEAGUE_NAMES } from '@/lib/leagueCategories'
 
 const GBP = String.fromCharCode(163)
 const BOOKMAKERS = ['Bet365', 'William Hill', 'Ladbrokes', 'Coral', 'Paddy Power', 'Betfred']
@@ -38,12 +39,40 @@ export default function DashboardPage() {
   useEffect(() => { loadMatches() }, [])
   function toggle(id) { setExpanded(e => ({ ...e, [id]: !e[id] })) }
 
-  const filtered = activeCategory === 'top_leagues'
-    ? matches.filter(m => m.league === activeLeague)
-    : matches
+  // Categorise all matches
+  const categorised = {
+    top_leagues:   matches.filter(m => getCategory(m.sd_league_id) === 'top_leagues'),
+    domestic_cups: matches.filter(m => getCategory(m.sd_league_id) === 'domestic_cups'),
+    european:      matches.filter(m => getCategory(m.sd_league_id) === 'european'),
+    international: matches.filter(m => getCategory(m.sd_league_id) === 'international')
+  }
+
+  // Filter by active category then active league within top_leagues
+  let filtered = []
+  if (activeCategory === 'top_leagues') {
+    filtered = categorised.top_leagues.filter(m => m.league === activeLeague)
+  } else {
+    filtered = categorised[activeCategory] || []
+  }
+
   const sorted = [...filtered].sort((a, b) =>
     Math.max(b.score?.total_home||0, b.score?.total_away||0) - Math.max(a.score?.total_home||0, a.score?.total_away||0)
   )
+
+  // Counts per league for the selector
+  const showCounts = {}
+  TOP_LEAGUE_NAMES.forEach(l => {
+    showCounts[l] = categorised.top_leagues.filter(m => m.league === l).length
+  })
+
+  // Category counts for the category tabs
+  const catCounts = {
+    top_leagues:   categorised.top_leagues.length,
+    domestic_cups: categorised.domestic_cups.length,
+    european:      categorised.european.length,
+    international: categorised.international.length
+  }
+
   const highConf = matches.filter(m => Math.max(m.score?.total_home||0, m.score?.total_away||0) >= 75).length
 
   function fmtKO(kt) { return kt ? new Date(kt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '' }
@@ -53,6 +82,11 @@ export default function DashboardPage() {
     if (t >= 80) return { label: 'BEST BET', colour: '#F0B90B' }
     if (t >= 75) return { label: 'HIGH CONF', colour: '#00C896' }
     return null
+  }
+
+  function getCategoryLabel(cat) {
+    const labels = { top_leagues: 'Top Leagues', domestic_cups: 'Domestic Cups', european: 'European', international: 'International' }
+    return labels[cat] || cat
   }
 
   return (
@@ -69,7 +103,11 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        {[{ label: 'Matches Today', value: matches.length }, { label: 'High Confidence', value: highConf }, { label: 'Tipster Picks', value: 0 }].map(s => (
+        {[
+          { label: 'Matches Today', value: matches.length },
+          { label: 'High Confidence', value: highConf },
+          { label: 'Tipster Picks', value: 0 }
+        ].map(s => (
           <div key={s.label} style={{ flex: '1 1 140px', background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '16px' }}>
             <div style={{ fontSize: '24px', fontWeight: 800 }}>{s.value}</div>
             <div style={{ fontSize: '12px', color: '#8B949E', marginTop: '4px' }}>{s.label}</div>
@@ -77,12 +115,14 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <LeagueSelector />
+      <LeagueSelector showCounts={showCounts} catCounts={catCounts} />
 
       {loading ? <LoadingSpinner message='Loading matches...' /> : sorted.length === 0 ? (
         <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
-          <div style={{ color: '#8B949E', fontSize: '14px', marginBottom: '6px' }}>No matches for {activeLeague} today.</div>
-          <div style={{ color: '#484F58', fontSize: '12px' }}>Try another league above.</div>
+          <div style={{ color: '#8B949E', fontSize: '14px', marginBottom: '6px' }}>
+            No {getCategoryLabel(activeCategory)} matches today{activeCategory === 'top_leagues' ? ' for ' + activeLeague : ''}.
+          </div>
+          <div style={{ color: '#484F58', fontSize: '12px' }}>Try another category or league above.</div>
         </div>
       ) : sorted.map(match => {
         const h = match.score?.total_home || 0
@@ -93,6 +133,7 @@ export default function DashboardPage() {
         const gap = Math.abs(h - a)
         const fav = h >= a ? match.home_team : match.away_team
         const pred = top > 0 ? (gap < 5 ? 'Too close to call' : fav + ' favoured (' + Math.round(gap) + 'pt gap)') : null
+        const odds = match.score?.modifiers?.odds
         return (
           <div key={match.fixture_id} style={{ marginBottom: '10px' }}>
             <div onClick={() => toggle(match.fixture_id)} style={{ background: '#161B22', border: '2px solid ' + (badge ? badge.colour + '60' : '#2A3441'), borderBottom: isOpen ? 'none' : undefined, borderRadius: isOpen ? '10px 10px 0 0' : '10px', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
@@ -107,7 +148,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
                 {top > 0 && <div style={{ textAlign: 'right' }}><div style={{ fontSize: '20px', fontWeight: 900, color: badge ? badge.colour : '#8B949E', lineHeight: 1 }}>{Math.round(top)}</div><div style={{ fontSize: '10px', color: '#484F58' }}>score</div></div>}
-                <span style={{ color: '#484F58', fontSize: '16px', fontWeight: 700 }}>{isOpen ? String.fromCharCode(8964) : '>'}</span>
+                <span style={{ color: '#484F58', fontSize: '16px', fontWeight: 700 }}>{isOpen ? 'v' : '>'}</span>
               </div>
             </div>
             {isOpen && (
@@ -131,10 +172,7 @@ export default function DashboardPage() {
                     {pred}
                   </div>
                 )}
-                {/* Bet markets */}
-                {(() => {
-                  const odds = match.score?.modifiers?.odds
-                  if (!odds) return null
+                {odds && (() => {
                   const homeW = decToFrac(odds.match_winner?.home)
                   const draw  = decToFrac(odds.match_winner?.draw)
                   const awayW = decToFrac(odds.match_winner?.away)
@@ -143,8 +181,8 @@ export default function DashboardPage() {
                   const bttsY = decToFrac(odds.btts?.yes)
                   const bttsN = decToFrac(odds.btts?.no)
                   const hasMatch = homeW !== 'N/A' || draw !== 'N/A' || awayW !== 'N/A'
-                  const hasOU   = over !== 'N/A' || under !== 'N/A'
-                  const hasBTTS = bttsY !== 'N/A' || bttsN !== 'N/A'
+                  const hasOU    = over !== 'N/A' || under !== 'N/A'
+                  const hasBTTS  = bttsY !== 'N/A' || bttsN !== 'N/A'
                   if (!hasMatch && !hasOU && !hasBTTS) return null
                   return (
                     <div style={{ marginBottom: '14px' }}>
@@ -199,7 +237,7 @@ export default function DashboardPage() {
                     </div>
                   )
                 })()}
-                {!match.score && <div style={{ color: '#888', fontSize: '13px', marginBottom: '14px' }}>Engine score pending - run Score from Admin.</div>}
+                {!match.score && <div style={{ color: '#888', fontSize: '13px', marginBottom: '14px' }}>Engine score pending.</div>}
                 <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '12px' }}>
                   <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: '#888', marginRight: '4px' }}>Bet with:</span>
