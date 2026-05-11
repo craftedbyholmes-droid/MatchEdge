@@ -122,7 +122,7 @@ export default function ResultsPage() {
                         const predTeam = pred === 'home' ? match.home_team : pred === 'away' ? match.away_team : 'Draw'
                         const gap = match.score ? Math.abs(match.score.total_home - match.score.total_away) : 0
                         return (
-                          <div key={match.fixture_id} style={{ background: '#161B22', border: '1px solid ' + border, borderRadius: '8px', padding: '12px 14px', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                          <div key={match.fixture_id} style={{ background: '#ffffff', border: '1px solid ' + border, borderRadius: '8px', padding: '12px 14px', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
                             <div style={{ flex: 1 }}>
                               <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '3px' }}>
                                 {match.home_team} vs {match.away_team}
