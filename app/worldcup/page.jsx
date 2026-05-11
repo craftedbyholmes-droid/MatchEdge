@@ -187,7 +187,7 @@ function CountdownBanner() {
   return (
     <div style={{ background: '#161B22', border: '1px solid #F0B90B40', borderRadius: '8px', padding: '16px', marginBottom: '24px', textAlign: 'center' }}>
       <div style={{ fontSize: '36px', fontWeight: 900, color: '#F0B90B' }}>{days}</div>
-      <div style={{ fontSize: '13px', color: '#8B949E' }}>days until kickoff — Mexico vs host nation opens the tournament</div>
+      <div style={{ fontSize: '13px', color: '#8B949E' }}>days until kickoff — Mexico vs South Africa opens the tournament</div>
     </div>
   )
 }
