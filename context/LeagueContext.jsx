@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const LeagueContext = createContext(null)
 
 const COOKIE_KEY = 'me_league'
-const VALID_LEAGUES = ['Premier League', 'Premiership', 'Bundesliga', 'La Liga', 'Ligue 1', 'Serie A']
+const VALID_LEAGUES = ['English Premier League', 'Scottish Premiership', 'Bundesliga', 'La Liga', 'Ligue 1', 'Serie A']
 const VALID_CATEGORIES = ['top_leagues', 'domestic_cups', 'european', 'international']
 
 function readCookie(key) {
@@ -22,7 +22,7 @@ function writeCookie(key, value) {
 export function LeagueProvider({ children }) {
   const [activeLeague, setActiveLeagueState] = useState(() => {
     const saved = readCookie(COOKIE_KEY + '_league')
-    return saved && VALID_LEAGUES.includes(saved) ? saved : 'Premier League'
+    return saved && VALID_LEAGUES.includes(saved) ? saved : 'English Premier League'
   })
   const [activeCategory, setActiveCategoryState] = useState(() => {
     const saved = readCookie(COOKIE_KEY + '_cat')

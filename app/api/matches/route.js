@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import supabaseAdmin from '@/lib/supabase'
+import { getDisplayName } from '@/lib/leagueCategories'
 
 export async function GET() {
   try {
@@ -27,7 +28,7 @@ export async function GET() {
         .order('score_state', { ascending: false })
         .limit(1)
         .single()
-      enriched.push({ ...match, score: score || null })
+      enriched.push({ ...match, league: getDisplayName(match.league), score: score || null })
     }
 
     return NextResponse.json(enriched)

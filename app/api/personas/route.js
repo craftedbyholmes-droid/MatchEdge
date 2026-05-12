@@ -96,7 +96,7 @@ export async function GET(request) {
         if (qualifies) candidates.push({ m, gap, topScore, combined, favourite, selection, market, homeScore, awayScore, isFavHome, sortKey })
       }
 
-      if (candidates.length < 2) continue
+      if (candidates.length < 1) continue
 
       candidates.sort((a, b) => b.sortKey - a.sortKey)
 
