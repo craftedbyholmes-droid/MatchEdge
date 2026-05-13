@@ -5,6 +5,7 @@ import { useLeague } from '@/context/LeagueContext'
 import LeagueSelector from '@/components/LeagueSelector'
 import PlanGate from '@/components/PlanGate'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 const BOOKMAKERS = ['Bet365', 'William Hill', 'Ladbrokes', 'Coral', 'Paddy Power', 'Betfred']
@@ -27,6 +28,7 @@ function decToFrac(dec) {
 
 export default function UpcomingPage() {
   const { plan } = usePlan()
+  const router = useRouter()
   const { activeLeague, activeCategory } = useLeague()
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)

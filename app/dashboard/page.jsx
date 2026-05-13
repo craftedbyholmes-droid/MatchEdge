@@ -4,6 +4,7 @@ import { usePlan } from '@/lib/usePlan'
 import { useLeague } from '@/context/LeagueContext'
 import LeagueSelector from '@/components/LeagueSelector'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useRouter } from 'next/navigation'
 import { getCategory, TOP_LEAGUE_NAMES } from '@/lib/leagueCategories'
 
 const GBP = String.fromCharCode(163)
@@ -22,6 +23,7 @@ function decToFrac(dec) {
 
 export default function DashboardPage() {
   const { plan } = usePlan()
+  const router = useRouter()
   const { activeLeague, activeCategory } = useLeague()
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,6 +40,7 @@ export default function DashboardPage() {
   }
   useEffect(() => { loadMatches() }, [])
   function toggle(id) { setExpanded(e => ({ ...e, [id]: !e[id] })) }
+  function goToMatch(id, e) { e.stopPropagation(); router.push('/match/' + id) }
 
   // Categorise all matches
   const categorised = {
