@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../lib/supabase.js';
-import { verifyCronAuth } from '../../../../lib/cronAuth.js';
+import supabaseAdmin from '@/lib/supabase';
+import { checkCronAuth } from '@/lib/cronAuth';
 
 const ATTACK_POSITIONS  = ['ST', 'CF', 'LW', 'RW', 'AM', 'SS'];
 const DEFENCE_POSITIONS = ['CB', 'LB', 'RB', 'LWB', 'RWB', 'GK', 'SW'];
@@ -61,13 +61,13 @@ function calcUnitTotal(attackClash, midfieldClash, defenceScore) {
 }
 
 export async function GET(request) {
-  const authError = verifyCronAuth(request);
+  const authError = checkCronAuth(request);
   if (authError) return authError;
 
   try {
     const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
 
-    const { data: matches, error: matchErr } = await supabase
+    const { data: matches, error: matchErr } = await supabaseAdmin
       .from('matches')
       .select('fixture_id, home_team_id, away_team_id, league, sd_league_id')
       .in('status', ['scheduled', 'live', 'upcoming'])
@@ -79,7 +79,7 @@ export async function GET(request) {
       return NextResponse.json({ ok: true, message: 'No upcoming matches to score', scored: 0 });
     }
 
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from('unit_scores')
       .select('fixture_id, calculated_at')
       .in('fixture_id', matches.map((m) => m.fixture_id));
@@ -98,7 +98,7 @@ export async function GET(request) {
     const leagueIds = [...new Set(toScore.map((m) => m.sd_league_id).filter(Boolean))];
     let playerCache = [];
     if (leagueIds.length > 0) {
-      const { data: cached } = await supabase
+      const { data: cached } = await supabaseAdmin
         .from('player_stats_cache')
         .select('*')
         .in('league_id', leagueIds)
@@ -169,7 +169,7 @@ export async function GET(request) {
       });
     }
 
-    const { error: upsertErr } = await supabase
+    const { error: upsertErr } = await supabaseAdmin
       .from('unit_scores')
       .upsert(upserts, { onConflict: 'fixture_id' });
     if (upsertErr) throw upsertErr;
