@@ -167,6 +167,7 @@ export default function UpcomingPage() {
                       ))}
                     </div>
                     <div style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
+                    <button onClick={() => window.location.href = '/match/' + match.fixture_id} style={{ marginTop: '10px', width: '100%', padding: '9px', background: '#f5f5f5', border: '1px solid #ddd', color: '#333', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Full Match Analysis</button>
                   </div>
                 )}
               </div>

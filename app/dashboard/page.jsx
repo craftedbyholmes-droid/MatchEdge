@@ -249,6 +249,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                   <div style={{ fontSize: '11px', color: '#aaa', marginTop: '8px' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
+                  <button onClick={() => window.location.href = '/match/' + match.fixture_id} style={{ marginTop: '10px', width: '100%', padding: '9px', background: '#0B0E11', border: '1px solid #2A3441', color: '#00C896', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Full Match Analysis</button>
                 </div>
               </div>
             )}
