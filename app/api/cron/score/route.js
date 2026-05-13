@@ -1,3 +1,4 @@
+import { scoreMatchesBatch } from '../../../lib/scorerBlend.js';
 import { NextResponse } from 'next/server'
 import supabaseAdmin from '@/lib/supabase'
 import { fetchMatch, fetchMatchPreview, fetchH2H } from '@/lib/soccerDataApi'
