@@ -134,7 +134,6 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
     </div>
   )
 }
-}
 
 export default function MatchDetailPage() {
   const params = useParams()
