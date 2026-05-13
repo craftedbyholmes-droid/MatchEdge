@@ -40,6 +40,7 @@ export async function GET(request, { params }) {
       latest_score: latest,
       modifiers: mods,
       events: events || [],
+      unit_scores: unitScores || null,
       picks: picks || [],
       odds: mods.odds || null,
       factors: mods.factors || null,

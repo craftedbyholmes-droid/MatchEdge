@@ -21,6 +21,9 @@ const CRON_BUTTONS = [
   { label: 'Rollup',          path: '/api/cron/rollup',       desc: 'Write match events to player stats' },
   { label: 'Calibrate',       path: '/api/cron/calibrate',    desc: 'Generate weekly weight suggestions' },
   { label: 'Test APIFootball', path: '/api/admin/test-apifootball', desc: 'Test API Football player stats - check response structure' },
+  { label: 'Map AF Fixtures',   path: '/api/cron/fetch-af-fixtures', desc: 'Map SoccerData fixtures to API Football IDs' },
+  { label: 'Enrich Players',    path: '/api/cron/enrich-players',    desc: 'Fetch player stats from API Football (uses 1 call per match)' },
+  { label: 'Score Units',       path: '/api/cron/score-units',       desc: 'Calculate unit interaction scores for todays matches' },
   { label: 'Seed World Cup', path: '/api/admin/seed-worldcup', desc: 'Pull all WC fixtures from SoccerData and seed DB' },
   { label: 'Fetch Results', path: '/api/admin/fetch-results', desc: 'Fetch scores for past matches and mark FT' },
   { label: 'Midnight Chain',  path: '/api/cron/midnight',     desc: 'Full midnight pipeline' }
