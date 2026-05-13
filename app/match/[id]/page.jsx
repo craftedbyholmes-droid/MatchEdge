@@ -41,56 +41,49 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
   const a = awayScore || 0
   const gap = Math.abs(h - a)
 
-  // Group players into positional blocks
   function groupByBlock(lineup) {
-    const gk   = lineup.filter(p => (p.position || '').toLowerCase().includes('goalkeeper'))
-    const def  = lineup.filter(p => (p.position || '').toLowerCase().includes('defender'))
-    const mid  = lineup.filter(p => (p.position || '').toLowerCase().includes('midfielder'))
-    const att  = lineup.filter(p => ['attacker','forward','striker'].some(x => (p.position || '').toLowerCase().includes(x)))
+    const gk  = lineup.filter(p => (p.position || '').toLowerCase().includes('goalkeeper'))
+    const def = lineup.filter(p => (p.position || '').toLowerCase().includes('defender'))
+    const mid = lineup.filter(p => (p.position || '').toLowerCase().includes('midfielder'))
+    const att = lineup.filter(p => ['attacker','forward','striker'].some(x => (p.position || '').toLowerCase().includes(x)))
     return { gk, def, mid, att }
   }
 
-  const homeBlocks = groupByBlock(homeLineup)
-  const awayBlocks = groupByBlock(awayLineup)
+  const home = groupByBlock(homeLineup)
+  const away = groupByBlock(awayLineup)
   const hasLineups = homeLineup.length > 0 || awayLineup.length > 0
 
-  // Block score based on count advantage
-  function blockColour(homeCount, awayCount, isHome) {
-    if (homeCount === awayCount) return '#F0B90B'
-    if (isHome && homeCount > awayCount) return '#00C896'
-    if (!isHome && awayCount > homeCount) return '#00C896'
-    return '#ef4444'
+  function Chips({ players, colour }) {
+    if (!players.length) return React.createElement('span', { style: { fontSize: '10px', color: 'rgba(255,255,255,0.25)' } }, 'TBC')
+    return players.map((p, i) => (
+      React.createElement('span', { key: i, style: { background: colour, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '3px', display: 'inline-block', margin: '1px' } },
+        (p.player?.name || p.name || '').split(' ').pop().substring(0, 7)
+      )
+    ))
   }
 
-  function BlockRow({ label, homePlayers, awayPlayers }) {
-    const hc = homePlayers.length
-    const ac = awayPlayers.length
+  // ClashRow - home unit on left faces the OPPOSING unit on right
+  function ClashRow({ clashLabel, homePlayers, awayPlayers, homeColour, awayColour }) {
+    const hAdv = homePlayers.length > awayPlayers.length
+    const aAdv = awayPlayers.length > homePlayers.length
     return (
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-        {/* Home side */}
-        <div style={{ flex: 1, background: 'rgba(0,200,150,0.15)', border: '1px solid ' + blockColour(hc, ac, true) + '60', borderRadius: '6px', padding: '6px 10px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>{hc} players</div>
-          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {homePlayers.map((p, i) => (
-              <div key={i} style={{ fontSize: '9px', color: '#fff', background: blockColour(hc, ac, true), padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>
-                {(p.player?.name || p.name || '').split(' ').pop().substring(0, 6)}
-              </div>
-            ))}
-            {hc === 0 && <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>TBC</div>}
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textAlign: 'center', letterSpacing: '1px', marginBottom: '4px', textTransform: 'uppercase' }}>{clashLabel}</div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
+          <div style={{ flex: 1, background: hAdv ? 'rgba(0,200,150,0.2)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (hAdv ? '#00C89660' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginBottom: '4px' }}>{homePlayers.length} players</div>
+            <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Chips players={homePlayers} colour={homeColour} />
+            </div>
+            {hAdv && <div style={{ fontSize: '9px', color: '#00C896', fontWeight: 800, marginTop: '4px' }}>ADVANTAGE</div>}
           </div>
-        </div>
-        {/* Label */}
-        <div style={{ width: '60px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', flexShrink: 0 }}>{label}</div>
-        {/* Away side */}
-        <div style={{ flex: 1, background: 'rgba(153,60,29,0.15)', border: '1px solid ' + blockColour(hc, ac, false) + '60', borderRadius: '6px', padding: '6px 10px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>{ac} players</div>
-          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {awayPlayers.map((p, i) => (
-              <div key={i} style={{ fontSize: '9px', color: '#fff', background: blockColour(hc, ac, false), padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>
-                {(p.player?.name || p.name || '').split(' ').pop().substring(0, 6)}
-              </div>
-            ))}
-            {ac === 0 && <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>TBC</div>}
+          <div style={{ width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>vs</div>
+          <div style={{ flex: 1, background: aAdv ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (aAdv ? '#ef444460' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginBottom: '4px' }}>{awayPlayers.length} players</div>
+            <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Chips players={awayPlayers} colour={awayColour} />
+            </div>
+            {aAdv && <div style={{ fontSize: '9px', color: '#ef4444', fontWeight: 800, marginTop: '4px' }}>ADVANTAGE</div>}
           </div>
         </div>
       </div>
@@ -99,50 +92,48 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
 
   return (
     <div style={{ background: 'linear-gradient(180deg, #0d2b0d 0%, #1a3a1a 50%, #0d2b0d 100%)', borderRadius: '12px', padding: '16px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
-      {/* Pitch lines */}
-      <div style={{ position: 'absolute', top: '50%', left: '5%', right: '5%', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-      <div style={{ position: 'absolute', top: '50%', left: '50%', width: '70px', height: '70px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', transform: 'translate(-50%, -50%)' }} />
-      <div style={{ position: 'absolute', top: '15%', left: '25%', right: '25%', height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-      <div style={{ position: 'absolute', bottom: '15%', left: '25%', right: '25%', height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+      <div style={{ position: 'absolute', top: '50%', left: '5%', right: '5%', height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+      <div style={{ position: 'absolute', top: '50%', left: '50%', width: '60px', height: '60px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)', transform: 'translate(-50%, -50%)' }} />
 
-      {/* Team names + engine scores */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: '13px', color: '#00C896' }}>{homeTeam}</div>
+          <div style={{ fontWeight: 800, fontSize: '14px', color: '#00C896' }}>{homeTeam}</div>
           {formationHome && formationHome !== 'None' && <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{formationHome}</div>}
-          <div style={{ fontSize: '28px', fontWeight: 900, color: h >= a ? '#00C896' : '#8B949E', lineHeight: 1, marginTop: '4px' }}>{Math.round(h)}</div>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>engine</div>
+          <div style={{ fontSize: '30px', fontWeight: 900, color: h >= a ? '#00C896' : '#8B949E', lineHeight: 1, marginTop: '4px' }}>{Math.round(h)}</div>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>engine</div>
         </div>
         <div style={{ textAlign: 'center', flexShrink: 0, padding: '0 12px' }}>
-          {homeScore !== null && awayScore !== null && typeof homeScore === 'number'
-            ? <div style={{ fontSize: '26px', fontWeight: 900, color: '#fff' }}>{homeScore} - {awayScore}</div>
-            : <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>vs</div>
+          {typeof homeScore === 'number' && homeScore !== null
+            ? <div style={{ fontSize: '28px', fontWeight: 900, color: '#fff' }}>{homeScore} - {awayScore}</div>
+            : <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.25)' }}>vs</div>
           }
           {gap >= 10 && <div style={{ fontSize: '10px', color: '#00C896', marginTop: '4px', fontWeight: 700 }}>{h >= a ? homeTeam : awayTeam} favoured</div>}
         </div>
         <div style={{ textAlign: 'center', flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: '13px', color: '#993C1D' }}>{awayTeam}</div>
+          <div style={{ fontWeight: 800, fontSize: '14px', color: '#993C1D' }}>{awayTeam}</div>
           {formationAway && formationAway !== 'None' && <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{formationAway}</div>}
-          <div style={{ fontSize: '28px', fontWeight: 900, color: a > h ? '#00C896' : '#8B949E', lineHeight: 1, marginTop: '4px' }}>{Math.round(a)}</div>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>engine</div>
+          <div style={{ fontSize: '30px', fontWeight: 900, color: a > h ? '#00C896' : '#8B949E', lineHeight: 1, marginTop: '4px' }}>{Math.round(a)}</div>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>engine</div>
         </div>
       </div>
 
-      {/* Positional block comparison */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <BlockRow label='Attack'  homePlayers={homeBlocks.att}  awayPlayers={awayBlocks.att} />
-        <BlockRow label='Midfield' homePlayers={homeBlocks.mid} awayPlayers={awayBlocks.mid} />
-        <BlockRow label='Defence' homePlayers={homeBlocks.def}  awayPlayers={awayBlocks.def} />
-        <BlockRow label='GK'      homePlayers={homeBlocks.gk}   awayPlayers={awayBlocks.gk} />
+        {/* Home attack vs Away defence - home is attacking */}
+        <ClashRow clashLabel={homeTeam + ' Attack vs ' + awayTeam + ' Defence'} homePlayers={home.att} awayPlayers={away.def} homeColour='#185FA5' awayColour='#993C1D' />
+        {/* Midfield battle */}
+        <ClashRow clashLabel='Midfield Battle' homePlayers={home.mid} awayPlayers={away.mid} homeColour='#185FA5' awayColour='#993C1D' />
+        {/* Away attack vs Home defence - away is attacking */}
+        <ClashRow clashLabel={awayTeam + ' Attack vs ' + homeTeam + ' Defence'} homePlayers={away.att} awayPlayers={home.def} homeColour='#993C1D' awayColour='#185FA5' />
       </div>
 
       {!hasLineups && (
-        <div style={{ textAlign: 'center', padding: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '12px', marginTop: '8px', position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', padding: '16px', color: 'rgba(255,255,255,0.25)', fontSize: '12px', position: 'relative', zIndex: 1 }}>
           Lineups confirmed closer to kick-off
         </div>
       )}
     </div>
   )
+}
 }
 
 export default function MatchDetailPage() {
