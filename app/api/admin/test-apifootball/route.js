@@ -4,28 +4,35 @@ export async function GET(request) {
   if (request.headers.get('authorization') !== 'Bearer ' + process.env.CRON_SECRET)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const key = process.env.FOOTBALL_DATA_ORG_KEY || process.env.API_FOOTBALL_KEY || process.env.RAPIDAPI_KEY
+  const key = process.env.FOOTBALL_API_KEY
+  if (!key) return NextResponse.json({ error: 'FOOTBALL_API_KEY not set' })
 
-  // Test with Haaland - API Football player ID 1100
-  // Also test fixture players endpoint to see what comes back
   const headers = {
-    'x-rapidapi-host': 'v3.football.api-sports.io',
-    'x-rapidapi-key': key,
     'x-apisports-key': key
   }
 
   try {
-    // Try direct API Sports endpoint first (no RapidAPI)
+    // Test 1: Get Haaland stats - season 2024
     const r1 = await fetch('https://v3.football.api-sports.io/players?id=1100&season=2024', { headers })
     const d1 = await r1.json()
+    const remaining = r1.headers.get('x-ratelimit-requests-remaining')
+    const limit = r1.headers.get('x-ratelimit-requests-limit')
 
-    // Also check remaining calls
-    const remaining = r1.headers.get('x-ratelimit-requests-remaining') || r1.headers.get('X-RateLimit-Remaining')
+    // Test 2: Get players by fixture - to understand lineup enrichment
+    // Use a recent PL fixture
+    const r2 = await fetch('https://v3.football.api-sports.io/fixtures/players?fixture=1035056', { headers })
+    const d2 = await r2.json()
+
+    // Test 3: Search player by name to get API Football ID from name
+    const r3 = await fetch('https://v3.football.api-sports.io/players?search=Haaland&season=2024', { headers })
+    const d3 = await r3.json()
 
     return NextResponse.json({
-      status: r1.status,
-      remaining_calls: remaining,
-      sample: d1?.response?.[0] || d1
+      calls_remaining: remaining,
+      calls_limit: limit,
+      haaland_stats: d1?.response?.[0] || d1,
+      fixture_players_sample: d2?.response?.[0] || d2,
+      search_result: d3?.response?.[0] || d3
     })
   } catch(err) {
     return NextResponse.json({ error: err.message })
