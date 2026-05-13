@@ -6,42 +6,45 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const ticker = searchParams.get('ticker')
 
-    // Season totals per persona
-    const { data: season } = await supabaseAdmin
-      .from('persona_season')
-      .select('*')
+    const { data: season } = await supabaseAdmin.from('persona_season').select('*')
 
-    // Ticker mode - just last 10 settled picks
     if (ticker) {
       const { data: recent } = await supabaseAdmin
         .from('persona_picks')
-        .select('persona, selection, odds_fractional, outcome, profit_loss')
-        .in('outcome', ['win', 'loss'])
+        .select('persona, selection, odds_fractional, outcome, profit_loss, home_team, away_team')
+        .in('outcome', ['win', 'loss', 'void'])
         .order('settled_at', { ascending: false })
-        .limit(10)
+        .limit(20)
       return NextResponse.json({ ticker: recent || [] })
     }
 
-    // Full pick history with match scores joined
     const { data: picks } = await supabaseAdmin
       .from('persona_picks')
       .select('*')
       .not('pick_date', 'is', null)
       .order('pick_date', { ascending: false })
-      .order('kickoff_time', { ascending: true })
       .limit(500)
 
-    // Model selections - all matches we scored with engine scores
-    const today = new Date().toISOString().split('T')[0]
+    const fixtureIds = [...new Set((picks || []).map(p => p.fixture_id).filter(Boolean))]
+    const { data: matchData } = await supabaseAdmin
+      .from('matches')
+      .select('fixture_id, home_team_id, away_team_id')
+      .in('fixture_id', fixtureIds)
+    const matchMap = {}
+    for (const m of (matchData || [])) matchMap[m.fixture_id] = m
+    const enrichedPicks = (picks || []).map(p => ({
+      ...p,
+      home_team_id: matchMap[p.fixture_id]?.home_team_id || null,
+      away_team_id: matchMap[p.fixture_id]?.away_team_id || null
+    }))
+
     const { data: modelMatches } = await supabaseAdmin
       .from('matches')
-      .select('fixture_id, home_team, away_team, league, kickoff_time, status, home_score, away_score, sd_league_id')
-      .lt('kickoff_time', today + 'T23:59:59Z')
+      .select('fixture_id, home_team, away_team, home_team_id, away_team_id, league, kickoff_time, status, home_score, away_score')
       .in('status', ['FT', 'finished'])
       .order('kickoff_time', { ascending: false })
       .limit(200)
 
-    // Enrich model matches with engine scores
     const modelWithScores = []
     for (const m of (modelMatches || [])) {
       const { data: score } = await supabaseAdmin
@@ -53,10 +56,6 @@ export async function GET(request) {
       if (score) modelWithScores.push({ ...m, score })
     }
 
-    return NextResponse.json({
-      season: season || [],
-      recent: picks || [],
-      model: modelWithScores
-    })
+    return NextResponse.json({ season: season || [], recent: enrichedPicks, model: modelWithScores })
   } catch(err) { return NextResponse.json({ error: err.message }, { status: 500 }) }
 }

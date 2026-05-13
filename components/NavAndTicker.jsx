@@ -1,16 +1,18 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePlan } from '@/lib/usePlan'
 import { LogoCompact } from '@/components/Logo'
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL
+const PERSONA_LABELS = { gordon: 'Gordon', stan: 'Stan', pez: 'Pez' }
 
 export default function NavAndTicker() {
   const [isMobile, setIsMobile] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [ticker, setTicker] = useState([])
   const [scrolled, setScrolled] = useState(false)
+  const tickerRef = useRef(null)
   const { plan, user } = usePlan()
   const isAdmin = user?.email === ADMIN_EMAIL
 
@@ -31,6 +33,23 @@ export default function NavAndTicker() {
     fetch('/api/stats?ticker=true').then(r => r.json()).then(d => setTicker(d.ticker || [])).catch(() => {})
   }, [])
 
+  // Auto-scroll ticker
+  useEffect(() => {
+    if (!ticker.length || !tickerRef.current) return
+    const el = tickerRef.current
+    let pos = 0
+    const speed = 0.5
+    let raf
+    function step() {
+      pos += speed
+      if (pos >= el.scrollWidth / 2) pos = 0
+      el.scrollLeft = pos
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [ticker])
+
   const links = [
     { href: '/dashboard',    label: 'Today' },
     { href: '/upcoming',     label: 'Upcoming' },
@@ -43,6 +62,15 @@ export default function NavAndTicker() {
   ]
 
   const navBg = scrolled ? 'rgba(11,14,17,0.95)' : '#0B0E11'
+
+  function outcomeColour(o) {
+    if (o === 'win')  return '#00C896'
+    if (o === 'loss') return '#ef4444'
+    return '#F0B90B'
+  }
+
+  // Double the ticker items so scroll loops seamlessly
+  const tickerItems = [...ticker, ...ticker]
 
   return (
     <>
@@ -68,21 +96,31 @@ export default function NavAndTicker() {
               <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: l.highlight ? '#F0B90B' : '#8B949E', fontWeight: l.highlight ? 700 : 400, textDecoration: 'none', fontSize: '14px' }}>{l.label}</Link>
             ))}
             {isAdmin && <Link href='/admin' onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 16px', color: '#F0B90B', fontWeight: 700, textDecoration: 'none', fontSize: '14px' }}>Admin</Link>}
-            <div style={{ margin: '10px 16px 0', padding: '10px 12px', background: '#161B22', border: '1px solid #ef444430', borderLeft: '3px solid #ef4444', borderRadius: '0 6px 6px 0', fontSize: '11px', color: '#8B949E' }}>
-              <span style={{ background: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '3px', marginRight: '8px' }}>18+</span>
-              Gamble responsibly. <a href='https://www.begambleaware.org' target='_blank' rel='noopener noreferrer' style={{ color: '#8B949E' }}>BeGambleAware.org</a>
-            </div>
           </div>
         )}
       </nav>
       {ticker.length > 0 && (
-        <div style={{ background: '#0B0E11', borderBottom: '1px solid #2A3441', padding: '5px 16px', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: '12px', color: '#8B949E' }}>
-          {ticker.map((t, i) => (
-            <span key={i} style={{ marginRight: '32px' }}>
-              <span style={{ color: t.outcome === 'win' ? '#00C896' : '#ef4444', fontWeight: 700 }}>{t.outcome === 'win' ? 'WIN' : 'LOSS'}</span>
-              {' '}{t.selection} <span style={{ color: '#484F58' }}>({t.persona})</span> {t.odds_fractional}
+        <div style={{ background: '#0B0E11', borderBottom: '1px solid #2A3441', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: '12px' }}>
+          <div ref={tickerRef} style={{ overflow: 'hidden', whiteSpace: 'nowrap', padding: '6px 0' }}>
+            <span style={{ display: 'inline-block' }}>
+              {tickerItems.map((t, i) => (
+                <span key={i} style={{ marginRight: '40px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ background: outcomeColour(t.outcome), color: '#000', fontSize: '10px', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>{(t.outcome || '').toUpperCase()}</span>
+                  <span style={{ color: '#E6EDF3', fontWeight: 600 }}>
+                    {t.home_team && t.away_team ? t.home_team + ' vs ' + t.away_team : t.selection}
+                  </span>
+                  <span style={{ color: '#8B949E' }}>{t.selection}</span>
+                  <span style={{ color: '#484F58' }}>@ {t.odds_fractional}</span>
+                  <span style={{ color: '#484F58' }}>({PERSONA_LABELS[t.persona] || t.persona})</span>
+                  {t.profit_loss !== 0 && (
+                    <span style={{ color: outcomeColour(t.outcome), fontWeight: 700 }}>
+                      {Number(t.profit_loss) > 0 ? '+' : ''}{String.fromCharCode(163)}{Math.abs(Number(t.profit_loss)).toFixed(2)}
+                    </span>
+                  )}
+                </span>
+              ))}
             </span>
-          ))}
+          </div>
         </div>
       )}
     </>
