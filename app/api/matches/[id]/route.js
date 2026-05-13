@@ -3,8 +3,8 @@ import supabaseAdmin from '@/lib/supabase'
 
 export async function GET(request, { params }) {
   try {
-    const id = params?.id || params
-    console.log('Match detail requested for ID:', id)
+    const { id } = await params
+    if (!id) return NextResponse.json({ error: 'No ID provided' }, { status: 400 })
 
     const { data: match } = await supabaseAdmin
       .from('matches')
@@ -12,29 +12,25 @@ export async function GET(request, { params }) {
       .eq('fixture_id', id)
       .single()
 
-    if (!match) return NextResponse.json({ error: 'Match not found' }, { status: 404 })
+    if (!match) return NextResponse.json({ error: 'Match not found: ' + id }, { status: 404 })
 
-    // Get all score states
     const { data: scores } = await supabaseAdmin
       .from('match_scores')
       .select('*')
       .eq('fixture_id', id)
       .order('score_state', { ascending: true })
 
-    // Get goal events
     const { data: events } = await supabaseAdmin
       .from('match_event_log')
       .select('*')
       .eq('fixture_id', id)
       .order('minute', { ascending: true })
 
-    // Get tipster picks for this match
     const { data: picks } = await supabaseAdmin
       .from('persona_picks')
       .select('persona, selection, odds_fractional, odds_decimal, market, outcome, profit_loss, tip_text, is_best_pick, stake')
       .eq('fixture_id', id)
 
-    // Latest score state
     const latest = scores?.length ? scores[scores.length - 1] : null
     const mods = latest?.modifiers || {}
 
@@ -57,5 +53,7 @@ export async function GET(request, { params }) {
       away_sidelined: mods.away_sidelined || [],
       preview_prediction: mods.preview_prediction || null
     })
-  } catch(err) { return NextResponse.json({ error: err.message }, { status: 500 }) }
+  } catch(err) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
