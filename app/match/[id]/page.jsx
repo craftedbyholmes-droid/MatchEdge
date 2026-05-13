@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { usePlan } from '@/lib/usePlan'
@@ -131,7 +131,8 @@ function OddsCard({ label, odds, signal, colour }) {
 }
 
 export default function MatchDetailPage() {
-  const { id } = useParams()
+  const params = useParams()
+  const id = params?.id
   const { plan } = usePlan()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)

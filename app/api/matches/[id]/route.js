@@ -3,7 +3,8 @@ import supabaseAdmin from '@/lib/supabase'
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params
+    const id = params?.id || params
+    console.log('Match detail requested for ID:', id)
 
     const { data: match } = await supabaseAdmin
       .from('matches')
