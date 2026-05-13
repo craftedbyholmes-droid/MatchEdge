@@ -54,11 +54,11 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
   const hasLineups = homeLineup.length > 0 || awayLineup.length > 0
 
   function Chips({ players, colour }) {
-    if (!players.length) return React.createElement('span', { style: { fontSize: '10px', color: 'rgba(255,255,255,0.25)' } }, 'TBC')
+    if (!players.length) return <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>TBC</span>
     return players.map((p, i) => (
-      React.createElement('span', { key: i, style: { background: colour, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '3px', display: 'inline-block', margin: '1px' } },
-        (p.player?.name || p.name || '').split(' ').pop().substring(0, 7)
-      )
+      <span key={i} style={{ background: colour, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '3px', display: 'inline-block', margin: '1px' }}>
+        {(p.player?.name || p.name || '').split(' ').pop().substring(0, 7)}
+      </span>
     ))
   }
 
