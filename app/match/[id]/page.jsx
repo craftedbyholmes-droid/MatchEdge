@@ -131,6 +131,7 @@ function ScoreBar({ score, colour, label }) {
 }
 
 function ZoneBlock({ players, colour, label, unitScore, advantage }) {
+  if (!players.length) return null
   const score = Math.round(unitScore || 50)
   const scoreColour = score >= 70 ? '#00C896' : score >= 55 ? '#F0B90B' : '#ef4444'
   return (
@@ -166,12 +167,12 @@ function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour, 
   const zones = ['left', 'centre', 'right']
   const zoneLabels = { left: 'Left', centre: 'Centre', right: 'Right' }
 
-  const leftZones   = homeAttacks ? homeZones  : awayZones
-  const rightZones  = homeAttacks ? awayZones  : homeZones
-  const leftColour  = homeAttacks ? homeColour : awayColour
-  const rightColour = homeAttacks ? awayColour : homeColour
-  const leftScore   = homeAttacks ? homeUnitScore : awayUnitScore
-  const rightScore  = homeAttacks ? awayUnitScore : homeUnitScore
+  const leftZones   = homeZones
+  const rightZones  = awayZones
+  const leftColour  = homeColour
+  const rightColour = awayColour
+  const leftScore   = homeUnitScore
+  const rightScore  = awayUnitScore
   const leftAdv     = leftScore > rightScore
 
   return (
