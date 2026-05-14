@@ -51,123 +51,171 @@ export default function UpcomingPage() {
   const showCounts = {}
   LEAGUE_ORDER.forEach(l => { showCounts[l] = byLeague[l]?.length || 0 })
 
-  const today = new Date().toISOString().split('T')[0]
+  const today    = new Date().toISOString().split('T')[0]
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
-  function fmtDate(d) { if (!d) return 'TBC'; if (d === today) return 'Today'; if (d === tomorrow) return 'Tomorrow'; return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) }
-  function fmtKO(kt) { if (!kt) return 'TBC'; return new Date(kt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }
-  function getBadge(score) { if (!score) return null; const t = Math.max(score.total_home||0,score.total_away||0); if (t>=80) return { label:'BEST BET',colour:'#F0B90B' }; if (t>=75) return { label:'HIGH CONF',colour:'#00C896' }; return null }
-  function getPred(match) { if (!match.score) return null; const h=match.score.total_home||0,a=match.score.total_away||0,gap=Math.abs(h-a); if (gap<5) return 'Too close to call'; return (h>a?match.home_team:match.away_team)+' favoured ('+Math.round(gap)+'pt gap)' }
-  function getOdds(match) { const odds=match.score?.modifiers?.odds; if (!odds) return null; return { home: decToFrac(odds.match_winner?.home), draw: decToFrac(odds.match_winner?.draw), away: decToFrac(odds.match_winner?.away) } }
+
+  function fmtDate(d) {
+    if (!d) return 'TBC'
+    if (d === today) return 'Today'
+    if (d === tomorrow) return 'Tomorrow'
+    return new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+  function fmtKO(kt) { return kt ? new Date(kt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'TBC' }
+  function getBadge(score) {
+    if (!score) return null
+    const t = Math.max(score.total_home||0, score.total_away||0)
+    if (t >= 80) return { label: 'BEST BET', colour: '#F0B90B' }
+    if (t >= 75) return { label: 'HIGH CONF', colour: '#00C896' }
+    return null
+  }
 
   if (plan === 'free') return (
-    <div style={{ paddingBottom: '60px' }}>
-      <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Upcoming Fixtures</h1>
+    <div className='me-page'>
+      <h1 className='me-title' style={{ marginBottom: '20px' }}>Upcoming Fixtures</h1>
       <PlanGate requiredPlan='pro' currentPlan={plan}><div /></PlanGate>
     </div>
   )
 
   const leagueMatches = byLeague[activeLeague] || []
+  const leagueColour  = LEAGUE_COLOURS[activeLeague] || '#161B22'
 
   return (
-    <div style={{ paddingBottom: '60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+    <div className='me-page'>
+      {/* Header */}
+      <div className='me-flex-between' style={{ marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 800 }}>Upcoming Fixtures</h1>
-          <p style={{ color: '#8B949E', fontSize: '13px', marginTop: '4px' }}>Engine predictions and real odds. Click any match to expand.</p>
+          <h1 className='me-title'>Upcoming Fixtures</h1>
+          <p className='me-sub' style={{ marginTop: '4px' }}>Engine predictions and real odds. Tap any match to expand.</p>
         </div>
-        <Link href='/competitions' style={{ background: '#161B22', border: '1px solid #2A3441', color: '#8B949E', padding: '8px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, textDecoration: 'none' }}>All Competitions</Link>
       </div>
 
-      <div style={{ background: '#161B22', border: '1px solid #F0B90B40', borderRadius: '8px', padding: '10px 14px', marginBottom: '20px', fontSize: '13px', color: '#F0B90B' }}>
-        Provisional scores - update automatically as injuries and lineups are confirmed.
+      {/* Provisional notice */}
+      <div className='me-card' style={{ borderColor: '#F0B90B40', marginBottom: '20px', padding: '10px 14px' }}>
+        <div style={{ fontSize: '13px', color: '#F0B90B' }}>Provisional scores — update automatically as injuries and lineups are confirmed.</div>
       </div>
 
       <LeagueSelector showCounts={showCounts} />
 
       {loading ? <LoadingSpinner message='Loading fixtures...' /> : activeCategory !== 'top_leagues' ? (
-        <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '32px', textAlign: 'center' }}>
-          <div style={{ fontSize: '14px', color: '#8B949E', marginBottom: '16px' }}>Browse all competitions in this category.</div>
+        <div className='me-card' style={{ textAlign: 'center', padding: '32px' }}>
+          <div className='me-sub' style={{ marginBottom: '16px' }}>Browse all competitions in this category.</div>
           <Link href='/competitions' style={{ background: '#00C896', color: '#0B0E11', padding: '10px 24px', borderRadius: '6px', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>Browse Competitions</Link>
         </div>
       ) : leagueMatches.length === 0 ? (
-        <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '8px', padding: '32px', textAlign: 'center', color: '#8B949E', fontSize: '14px' }}>
-          No upcoming fixtures for {activeLeague}.
+        <div className='me-card' style={{ textAlign: 'center', padding: '32px' }}>
+          <div className='me-sub'>No upcoming fixtures for {activeLeague}.</div>
         </div>
       ) : (
-        <div>
-          <div style={{ background: LEAGUE_COLOURS[activeLeague] || '#161B22', borderRadius: '8px 8px 0 0', padding: '12px 16px', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #2A3441' }}>
+          {/* League header */}
+          <div style={{ background: leagueColour, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontWeight: 800, fontSize: '15px', color: '#fff' }}>{activeLeague}</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{leagueMatches.length} matches</div>
           </div>
+
           {leagueMatches.map((match, idx) => {
-            const topScore = Math.max(match.score?.total_home||0, match.score?.total_away||0)
+            const h = match.score?.total_home || 0
+            const a = match.score?.total_away || 0
+            const top = Math.max(h, a)
+            const gap = Math.abs(h - a)
             const badge = getBadge(match.score)
             const isOpen = expanded[match.fixture_id]
-            const pred = getPred(match)
-            const odds = getOdds(match)
             const isLast = idx === leagueMatches.length - 1
+            const fav = h >= a ? match.home_team : match.away_team
+            const pred = top > 0 ? (gap < 5 ? 'Too close to call' : fav + ' favoured (' + Math.round(gap) + 'pt gap)') : null
+            const odds = match.score?.modifiers?.odds
+            const homeW = odds ? decToFrac(odds.match_winner?.home) : null
+            const draw  = odds ? decToFrac(odds.match_winner?.draw)  : null
+            const awayW = odds ? decToFrac(odds.match_winner?.away) : null
+            const hasOdds = homeW && homeW !== 'N/A'
+
             return (
-              <div key={match.fixture_id} style={{ marginBottom: 0 }}>
-                {/* Header - dark */}
-                <div onClick={() => toggle(match.fixture_id)} style={{ background: '#161B22', border: '1px solid ' + (badge ? badge.colour + '40' : '#2A3441'), borderTop: 'none', borderRadius: (!isOpen && isLast) ? '0 0 8px 8px' : '0', padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '4px' }}>
-                      {badge && <span style={{ background: badge.colour, color: '#000', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '8px' }}>{badge.label}</span>}
-                      <span style={{ fontWeight: 700, fontSize: '14px' }}>{match.home_team}</span>
-                      <span style={{ color: '#484F58', fontSize: '12px' }}>vs</span>
-                      <span style={{ fontWeight: 700, fontSize: '14px' }}>{match.away_team}</span>
+              <div key={match.fixture_id}>
+                {/* Collapsed row */}
+                <div
+                  onClick={() => toggle(match.fixture_id)}
+                  style={{ background: '#161B22', borderTop: idx > 0 ? '1px solid #2A3441' : 'none', padding: '12px 14px', cursor: 'pointer' }}
+                >
+                  {/* Top row */}
+                  <div className='me-flex-between' style={{ marginBottom: '6px' }}>
+                    <div className='me-flex' style={{ flexWrap: 'wrap', gap: '5px' }}>
+                      {badge && <span className='me-badge' style={{ background: badge.colour, color: '#000' }}>{badge.label}</span>}
+                      <span className='me-muted'>{fmtDate(match.kickoff_time?.split('T')[0])} {fmtKO(match.kickoff_time)}</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#8B949E' }}>{fmtDate(match.kickoff_time?.split('T')[0])} - {fmtKO(match.kickoff_time)}</div>
+                    <div className='me-flex' style={{ gap: '8px' }}>
+                      {top > 0 && (
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '18px', fontWeight: 900, color: badge ? badge.colour : '#8B949E', lineHeight: 1 }}>{Math.round(top)}</div>
+                          <div className='me-muted'>score</div>
+                        </div>
+                      )}
+                      <span className='me-muted'>{isOpen ? '▲' : '▼'}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-                    {topScore > 0 && <div style={{ textAlign: 'right' }}><div style={{ fontSize: '20px', fontWeight: 900, color: badge ? badge.colour : '#8B949E', lineHeight: 1 }}>{Math.round(topScore)}</div><div style={{ fontSize: '10px', color: '#484F58' }}>score</div></div>}
-                    <span style={{ color: '#484F58' }}>{isOpen ? 'v' : '>'}</span>
+                  {/* Team names */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '14px', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{match.home_team}</span>
+                    <span className='me-muted' style={{ flexShrink: 0 }}>vs</span>
+                    <span style={{ fontWeight: 700, fontSize: '14px', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }}>{match.away_team}</span>
                   </div>
                 </div>
-                {/* Expanded - WHITE */}
+
+                {/* Expanded */}
                 {isOpen && (
-                  <div style={{ background: '#ffffff', border: '2px solid ' + (LEAGUE_COLOURS[activeLeague] || '#00C896'), borderTop: 'none', borderRadius: isLast ? '0 0 8px 8px' : '0', padding: '16px 18px', color: '#111' }}>
+                  <div style={{ background: '#ffffff', borderTop: '2px solid ' + leagueColour, padding: '14px', color: '#111' }}>
                     {/* Engine scores */}
                     {match.score && (
-                      <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
-                        <div style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '12px', textAlign: 'center', border: (match.score.total_home||0) > (match.score.total_away||0) ? '2px solid #00C896' : '1px solid #e0e0e0' }}>
-                          <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>HOME ENGINE</div>
-                          <div style={{ fontSize: '26px', fontWeight: 900, color: (match.score.total_home||0) > (match.score.total_away||0) ? '#00C896' : '#111' }}>{Math.round(match.score.total_home||0)}</div>
-                          <div style={{ fontSize: '12px', color: '#444', fontWeight: 600 }}>{match.home_team}</div>
-                        </div>
-                        <div style={{ flex: 1, background: '#f5f5f5', borderRadius: '8px', padding: '12px', textAlign: 'center', border: (match.score.total_away||0) > (match.score.total_home||0) ? '2px solid #00C896' : '1px solid #e0e0e0' }}>
-                          <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>AWAY ENGINE</div>
-                          <div style={{ fontSize: '26px', fontWeight: 900, color: (match.score.total_away||0) > (match.score.total_home||0) ? '#00C896' : '#111' }}>{Math.round(match.score.total_away||0)}</div>
-                          <div style={{ fontSize: '12px', color: '#444', fontWeight: 600 }}>{match.away_team}</div>
-                        </div>
-                      </div>
-                    )}
-                    {/* Prediction */}
-                    {pred && <div style={{ background: '#f0f9f6', border: '1px solid #00C89640', borderRadius: '6px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px', fontWeight: 600, color: '#007a5e' }}>{pred}</div>}
-                    {/* Odds */}
-                    {odds && (
-                      <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                      <div className='me-grid-2' style={{ marginBottom: '12px' }}>
                         {[
-                          { label: match.home_team + ' Win', odds: odds.home },
-                          { label: 'Draw', odds: odds.draw },
-                          { label: match.away_team + ' Win', odds: odds.away }
-                        ].map(o => (
-                          <div key={o.label} style={{ flex: 1, background: '#f5f5f5', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>{o.label}</div>
-                            <div style={{ fontSize: '16px', fontWeight: 800, color: '#111' }}>{o.odds}</div>
+                          { label: 'HOME ENGINE', team: match.home_team, score: h, lead: h > a },
+                          { label: 'AWAY ENGINE', team: match.away_team, score: a, lead: a > h }
+                        ].map(s => (
+                          <div key={s.label} style={{ background: '#f5f5f5', border: s.lead ? '2px solid #00C896' : '1px solid #e0e0e0', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+                            <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', fontWeight: 600 }}>{s.label}</div>
+                            <div style={{ fontSize: '24px', fontWeight: 900, color: s.lead ? '#00C896' : '#333' }}>{Math.round(s.score)}</div>
+                            <div style={{ fontSize: '11px', color: '#444', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.team}</div>
                           </div>
                         ))}
                       </div>
                     )}
+
+                    {/* Prediction */}
+                    {pred && (
+                      <div style={{ background: '#f0f9f6', border: '1px solid #00C89640', borderRadius: '6px', padding: '8px 12px', marginBottom: '12px', fontSize: '13px', fontWeight: 600, color: '#007a5e' }}>{pred}</div>
+                    )}
+
+                    {/* Odds */}
+                    {hasOdds && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <div className='me-label' style={{ marginBottom: '6px' }}>Match Result</div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {[
+                            { label: match.home_team, odds: homeW },
+                            { label: 'Draw', odds: draw },
+                            { label: match.away_team, odds: awayW }
+                          ].map(o => (
+                            <div key={o.label} style={{ flex: 1, background: '#f5f5f5', border: '1px solid #e0e0e0', borderRadius: '6px', padding: '8px 4px', textAlign: 'center' }}>
+                              <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.label}</div>
+                              <div style={{ fontSize: '15px', fontWeight: 800, color: '#111' }}>{o.odds}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Bookmakers */}
-                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid #e5e5e5' }}>
-                      <span style={{ fontSize: '11px', color: '#888', lineHeight: '26px', marginRight: '4px' }}>Bet with:</span>
-                      {BOOKMAKERS.map(bm => (
-                        <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#f5f5f5', border: '1px solid #ddd', color: '#333', padding: '3px 10px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: 600 }}>{bm}</a>
-                      ))}
+                    <div style={{ paddingTop: '10px', borderTop: '1px solid #e5e5e5' }}>
+                      <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', fontWeight: 600 }}>BET WITH</div>
+                      <div className='me-flex-wrap' style={{ marginBottom: '10px' }}>
+                        {BOOKMAKERS.map(bm => (
+                          <a key={bm} href='#' target='_blank' rel='noopener noreferrer' style={{ background: '#f5f5f5', border: '1px solid #ddd', color: '#333', padding: '4px 9px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: 600 }}>{bm}</a>
+                        ))}
+                      </div>
+                      <button onClick={() => router.push('/match/' + match.fixture_id)} style={{ width: '100%', padding: '9px', background: '#0B0E11', border: '1px solid #2A3441', color: '#00C896', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+                        Full Match Analysis →
+                      </button>
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '6px', textAlign: 'center' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#999', marginTop: '8px' }}>18+ | Gamble responsibly | BeGambleAware.org</div>
-                    <button onClick={() => window.location.href = '/match/' + match.fixture_id} style={{ marginTop: '10px', width: '100%', padding: '9px', background: '#f5f5f5', border: '1px solid #ddd', color: '#333', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Full Match Analysis</button>
                   </div>
                 )}
               </div>
