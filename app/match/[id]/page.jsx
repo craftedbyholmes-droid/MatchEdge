@@ -35,66 +35,124 @@ function OddsCard({ label, odds, signal, colour }) {
   )
 }
 
-// Positional block comparison on pitch
+function splitDefence(defenders) {
+  if (!defenders.length) return { left: [], centre: [], right: [] }
+  if (defenders.length === 1) return { left: [], centre: defenders, right: [] }
+  if (defenders.length === 2) return { left: [defenders[0]], centre: [], right: [defenders[1]] }
+  if (defenders.length === 3) return { left: [defenders[0]], centre: [defenders[1]], right: [defenders[2]] }
+  if (defenders.length === 4) return { left: [defenders[0]], centre: [defenders[1], defenders[2]], right: [defenders[3]] }
+  return { left: [defenders[0]], centre: defenders.slice(1, defenders.length - 1), right: [defenders[defenders.length - 1]] }
+}
+
+function splitAttack(attackers, midfielders) {
+  const atts = attackers.length > 0 ? attackers : midfielders.slice(-2)
+  if (!atts.length) return { left: [], centre: [], right: [] }
+  if (atts.length === 1) return { left: [], centre: atts, right: [] }
+  if (atts.length === 2) return { left: [atts[0]], centre: [], right: [atts[1]] }
+  if (atts.length === 3) return { left: [atts[0]], centre: [atts[1]], right: [atts[2]] }
+  return { left: [atts[0]], centre: atts.slice(1, atts.length - 1), right: [atts[atts.length - 1]] }
+}
+
+function groupLineup(lineup) {
+  const pos = (p) => (p.position || '').toLowerCase()
+  const gk  = lineup.filter(p => pos(p).includes('goalkeeper'))
+  const def = lineup.filter(p => pos(p).includes('defender'))
+  const mid = lineup.filter(p => pos(p).includes('midfielder'))
+  const att = lineup.filter(p => ['attacker','forward','striker'].some(x => pos(p).includes(x)))
+  return { gk, def, mid, att, defSplit: splitDefence(def), attSplit: splitAttack(att, mid) }
+}
+
+function chipName(p) {
+  return (p.player?.name || p.name || '').split(' ').pop().substring(0, 8)
+}
+
+function PlayerChip({ p, colour }) {
+  return (
+    <span style={{ background: colour, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '2px 5px', borderRadius: '3px', display: 'inline-block', margin: '1px', whiteSpace: 'nowrap' }}>
+      {chipName(p)}
+    </span>
+  )
+}
+
+function ZoneBlock({ players, colour, label, advantage }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0, background: advantage ? colour + '22' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (advantage ? colour + '80' : 'rgba(255,255,255,0.08)'), borderRadius: '6px', padding: '6px 4px', textAlign: 'center' }}>
+      <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.25)', marginBottom: '3px', letterSpacing: '0.5px' }}>{label}</div>
+      {players.length > 0
+        ? <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {players.map((p, i) => <PlayerChip key={i} p={p} colour={advantage ? colour : '#444'} />)}
+          </div>
+        : <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.15)' }}>-</span>
+      }
+      {advantage && <div style={{ fontSize: '8px', color: colour, fontWeight: 800, marginTop: '3px' }}>EDGE</div>}
+    </div>
+  )
+}
+
+function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour }) {
+  const zones = ['left', 'centre', 'right']
+  const zoneLabels = { left: 'Left', centre: 'Centre', right: 'Right' }
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textAlign: 'center', letterSpacing: '1px', marginBottom: '6px', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 28px 1fr', gap: '4px', alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {zones.map(z => {
+            const hPlayers = homeZones[z] || []
+            const aPlayers = awayZones[z] || []
+            return <ZoneBlock key={z} players={hPlayers} colour={homeColour} label={zoneLabels[z]} advantage={hPlayers.length > 0 && hPlayers.length > aPlayers.length} />
+          })}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.15)', paddingTop: '20px' }}>vs</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {zones.map(z => {
+            const hPlayers = homeZones[z] || []
+            const aPlayers = awayZones[z] || []
+            return <ZoneBlock key={z} players={aPlayers} colour={awayColour} label={zoneLabels[z]} advantage={aPlayers.length > hPlayers.length} />
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MidfieldRow({ homeMid, awayMid }) {
+  const hAdv = homeMid.length > awayMid.length
+  const aAdv = awayMid.length > homeMid.length
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textAlign: 'center', letterSpacing: '1px', marginBottom: '6px', textTransform: 'uppercase' }}>Midfield Battle</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 28px 1fr', gap: '4px', alignItems: 'center' }}>
+        <div style={{ background: hAdv ? 'rgba(0,200,150,0.15)' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (hAdv ? '#00C89660' : 'rgba(255,255,255,0.08)'), borderRadius: '6px', padding: '8px 4px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {homeMid.map((p, i) => <PlayerChip key={i} p={p} colour={hAdv ? '#00C896' : '#444'} />)}
+          </div>
+          {hAdv && <div style={{ fontSize: '8px', color: '#00C896', fontWeight: 800, marginTop: '3px' }}>EDGE</div>}
+        </div>
+        <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.15)' }}>vs</div>
+        <div style={{ background: aAdv ? 'rgba(153,60,29,0.15)' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (aAdv ? '#993C1D60' : 'rgba(255,255,255,0.08)'), borderRadius: '6px', padding: '8px 4px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {awayMid.map((p, i) => <PlayerChip key={i} p={p} colour={aAdv ? '#993C1D' : '#444'} />)}
+          </div>
+          {aAdv && <div style={{ fontSize: '8px', color: '#993C1D', fontWeight: 800, marginTop: '3px' }}>EDGE</div>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, awayLineup, formationHome, formationAway }) {
   const h = homeScore || 0
   const a = awayScore || 0
   const gap = Math.abs(h - a)
-
-  function groupByBlock(lineup) {
-    const gk  = lineup.filter(p => (p.position || '').toLowerCase().includes('goalkeeper'))
-    const def = lineup.filter(p => (p.position || '').toLowerCase().includes('defender'))
-    const mid = lineup.filter(p => (p.position || '').toLowerCase().includes('midfielder'))
-    const att = lineup.filter(p => ['attacker','forward','striker'].some(x => (p.position || '').toLowerCase().includes(x)))
-    return { gk, def, mid, att }
-  }
-
-  const home = groupByBlock(homeLineup)
-  const away = groupByBlock(awayLineup)
-  const hasLineups = homeLineup.length > 0 || awayLineup.length > 0
-
-  function Chips({ players, colour }) {
-    if (!players.length) return <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>TBC</span>
-    return players.map((p, i) => (
-      <span key={i} style={{ background: colour, color: '#fff', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '3px', display: 'inline-block', margin: '1px' }}>
-        {(p.player?.name || p.name || '').split(' ').pop().substring(0, 7)}
-      </span>
-    ))
-  }
-
-  // ClashRow - home unit on left faces the OPPOSING unit on right
-  function ClashRow({ clashLabel, homePlayers, awayPlayers, homeColour, awayColour }) {
-    const hAdv = homePlayers.length > awayPlayers.length
-    const aAdv = awayPlayers.length > homePlayers.length
-    return (
-      <div style={{ marginBottom: '10px' }}>
-        <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textAlign: 'center', letterSpacing: '1px', marginBottom: '4px', textTransform: 'uppercase' }}>{clashLabel}</div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
-          <div style={{ flex: 1, background: hAdv ? 'rgba(0,200,150,0.2)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (hAdv ? '#00C89660' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginBottom: '4px' }}>{homePlayers.length} players</div>
-            <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Chips players={homePlayers} colour={homeColour} />
-            </div>
-            {hAdv && <div style={{ fontSize: '9px', color: '#00C896', fontWeight: 800, marginTop: '4px' }}>ADVANTAGE</div>}
-          </div>
-          <div style={{ width: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>vs</div>
-          <div style={{ flex: 1, background: aAdv ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (aAdv ? '#ef444460' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginBottom: '4px' }}>{awayPlayers.length} players</div>
-            <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Chips players={awayPlayers} colour={awayColour} />
-            </div>
-            {aAdv && <div style={{ fontSize: '9px', color: '#ef4444', fontWeight: 800, marginTop: '4px' }}>ADVANTAGE</div>}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const home = groupLineup(homeLineup || [])
+  const away = groupLineup(awayLineup || [])
+  const hasLineups = (homeLineup || []).length > 0 || (awayLineup || []).length > 0
 
   return (
     <div style={{ background: 'linear-gradient(180deg, #0d2b0d 0%, #1a3a1a 50%, #0d2b0d 100%)', borderRadius: '12px', padding: '16px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: '50%', left: '5%', right: '5%', height: '1px', background: 'rgba(255,255,255,0.08)' }} />
       <div style={{ position: 'absolute', top: '50%', left: '50%', width: '60px', height: '60px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)', transform: 'translate(-50%, -50%)' }} />
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', flex: 1 }}>
           <div style={{ fontWeight: 800, fontSize: '14px', color: '#00C896' }}>{homeTeam}</div>
@@ -116,21 +174,97 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
           <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>engine</div>
         </div>
       </div>
-
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Home attack vs Away defence - home is attacking */}
-        <ClashRow clashLabel={homeTeam + ' Attack vs ' + awayTeam + ' Defence'} homePlayers={home.att} awayPlayers={away.def} homeColour='#185FA5' awayColour='#993C1D' />
-        {/* Midfield battle */}
-        <ClashRow clashLabel='Midfield Battle' homePlayers={home.mid} awayPlayers={away.mid} homeColour='#185FA5' awayColour='#993C1D' />
-        {/* Away attack vs Home defence - away is attacking */}
-        <ClashRow clashLabel={awayTeam + ' Attack vs ' + homeTeam + ' Defence'} homePlayers={away.att} awayPlayers={home.def} homeColour='#993C1D' awayColour='#185FA5' />
+        {hasLineups ? (
+          <>
+            <PositionalClash
+              label={homeTeam + ' Attack vs ' + awayTeam + ' Defence'}
+              homeZones={home.attSplit}
+              awayZones={away.defSplit}
+              homeColour='#185FA5'
+              awayColour='#993C1D'
+            />
+            <MidfieldRow homeMid={home.mid} awayMid={away.mid} />
+            <PositionalClash
+              label={awayTeam + ' Attack vs ' + homeTeam + ' Defence'}
+              homeZones={away.attSplit}
+              awayZones={home.defSplit}
+              homeColour='#993C1D'
+              awayColour='#185FA5'
+            />
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '24px', color: 'rgba(255,255,255,0.25)', fontSize: '12px' }}>
+            Lineups confirmed closer to kick-off
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
 
-      {!hasLineups && (
-        <div style={{ textAlign: 'center', padding: '16px', color: 'rgba(255,255,255,0.25)', fontSize: '12px', position: 'relative', zIndex: 1 }}>
-          Lineups confirmed closer to kick-off
+function EngineMarkets({ h, a, odds, homeTeam, awayTeam }) {
+  const combined = h + a
+  const gap = Math.abs(h - a)
+  const bttsFav = combined > 105 ? 'Yes' : combined < 88 ? 'No' : null
+  const bttsConf = combined > 115 ? 'HIGH' : combined > 105 ? 'LIKELY' : combined < 80 ? 'UNLIKELY' : null
+
+  const favTeam = h >= a ? homeTeam : awayTeam
+  const favScore = Math.max(h, a)
+  const undScore = Math.min(h, a)
+  let csLine = null
+  if (gap >= 25) csLine = '3-0'
+  else if (gap >= 18) csLine = '2-0'
+  else if (gap >= 12) csLine = '2-1'
+  else if (gap >= 6) csLine = '1-0'
+
+  return (
+    <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '10px', padding: '16px', marginBottom: '12px' }}>
+      <div style={{ fontSize: '11px', fontWeight: 700, color: '#484F58', letterSpacing: '1px', marginBottom: '12px' }}>ENGINE PREDICTIONS</div>
+
+      {bttsFav && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #1E2530' }}>
+          <div>
+            <div style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 600 }}>Both Teams To Score</div>
+            <div style={{ fontSize: '11px', color: '#484F58', marginTop: '2px' }}>Combined attack score: {Math.round(combined)}</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+            <div style={{ background: '#00C89620', color: '#00C896', fontSize: '12px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px' }}>BTTS {bttsFav}</div>
+            {bttsConf && <div style={{ fontSize: '10px', color: '#484F58' }}>{bttsConf}</div>}
+          </div>
         </div>
       )}
+
+      {csLine && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #1E2530' }}>
+          <div>
+            <div style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 600 }}>Correct Score (indicative)</div>
+            <div style={{ fontSize: '11px', color: '#484F58', marginTop: '2px' }}>{favTeam} advantage — gap: {Math.round(gap)}pts</div>
+          </div>
+          <div style={{ background: '#F0B90B20', color: '#F0B90B', fontSize: '12px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px' }}>{h >= a ? csLine : csLine.split('-').reverse().join('-')}</div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #1E2530' }}>
+        <div style={{ fontSize: '13px', color: '#8B949E' }}>Anytime Goalscorer</div>
+        <div style={{ fontSize: '11px', color: '#484F58' }}>See Tipster Picks tab</div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #1E2530' }}>
+        <div style={{ fontSize: '13px', color: '#8B949E' }}>First Goalscorer</div>
+        <div style={{ fontSize: '11px', color: '#484F58' }}>See Tipster Picks tab</div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #1E2530' }}>
+        <div style={{ fontSize: '13px', color: '#8B949E' }}>Player Cards</div>
+        <div style={{ fontSize: '11px', color: '#484F58' }}>Coming soon</div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #1E2530' }}>
+        <div style={{ fontSize: '13px', color: '#8B949E' }}>Corners</div>
+        <div style={{ fontSize: '11px', color: '#484F58' }}>Coming soon</div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
+        <div style={{ fontSize: '13px', color: '#8B949E' }}>Penalties</div>
+        <div style={{ fontSize: '11px', color: '#484F58' }}>Coming soon</div>
+      </div>
     </div>
   )
 }
@@ -141,7 +275,6 @@ export default function MatchDetailPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('overview')
-
   const id = params?.id
 
   useEffect(() => {
@@ -171,7 +304,6 @@ export default function MatchDetailPage() {
   const awayWinOdds = decToFrac(odds?.match_winner?.away)
   const overOdds    = decToFrac(odds?.over_under?.over)
   const underOdds   = decToFrac(odds?.over_under?.under)
-
   const scoreColour = v => v >= 70 ? '#00C896' : v >= 55 ? '#F0B90B' : '#8B949E'
 
   const sectionBtn = (key, label) => (
@@ -184,7 +316,6 @@ export default function MatchDetailPage() {
     <div style={{ paddingBottom: '60px' }}>
       <Link href='/dashboard' style={{ fontSize: '13px', color: '#484F58', textDecoration: 'none', display: 'inline-block', marginBottom: '16px' }}> Back to Today</Link>
 
-      {/* Match header */}
       <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '12px', padding: '24px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ fontSize: '12px', color: '#484F58', fontWeight: 600 }}>{match.league}</div>
@@ -221,7 +352,6 @@ export default function MatchDetailPage() {
         </div>
       </div>
 
-      {/* Tabs - no Engine Analysis */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {sectionBtn('overview', 'Overview')}
         {sectionBtn('pitch', 'Lineup & Pitch')}
@@ -230,15 +360,9 @@ export default function MatchDetailPage() {
         {events.length > 0 && sectionBtn('events', 'Match Events')}
       </div>
 
-      {/* OVERVIEW */}
       {activeSection === 'overview' && (
         <div>
-          <PitchBlockView
-            homeTeam={match.home_team} awayTeam={match.away_team}
-            homeScore={match.home_score} awayScore={match.away_score}
-            homeLineup={home_lineup} awayLineup={away_lineup}
-            formationHome={formation_home} formationAway={formation_away}
-          />
+          <PitchBlockView homeTeam={match.home_team} awayTeam={match.away_team} homeScore={match.home_score} awayScore={match.away_score} homeLineup={home_lineup} awayLineup={away_lineup} formationHome={formation_home} formationAway={formation_away} />
           {odds?.match_winner && (
             <div style={{ background: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', letterSpacing: '1px', marginBottom: '10px' }}>MATCH RESULT</div>
@@ -268,15 +392,9 @@ export default function MatchDetailPage() {
         </div>
       )}
 
-      {/* PITCH */}
       {activeSection === 'pitch' && (
         <div>
-          <PitchBlockView
-            homeTeam={match.home_team} awayTeam={match.away_team}
-            homeScore={match.home_score} awayScore={match.away_score}
-            homeLineup={home_lineup} awayLineup={away_lineup}
-            formationHome={formation_home} formationAway={formation_away}
-          />
+          <PitchBlockView homeTeam={match.home_team} awayTeam={match.away_team} homeScore={match.home_score} awayScore={match.away_score} homeLineup={home_lineup} awayLineup={away_lineup} formationHome={formation_home} formationAway={formation_away} />
           {(home_sidelined.length > 0 || away_sidelined.length > 0) && (
             <div style={{ background: '#161B22', border: '1px solid #ef444440', borderRadius: '10px', padding: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#ef4444', letterSpacing: '1px', marginBottom: '10px' }}>UNAVAILABLE PLAYERS</div>
@@ -289,7 +407,6 @@ export default function MatchDetailPage() {
         </div>
       )}
 
-      {/* MARKETS */}
       {activeSection === 'markets' && (
         <div>
           {odds?.match_winner && (
@@ -320,12 +437,7 @@ export default function MatchDetailPage() {
               </div>
             </div>
           )}
-          <div style={{ background: '#161B22', border: '1px solid #2A3441', borderRadius: '10px', padding: '16px', marginBottom: '12px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#484F58', letterSpacing: '1px', marginBottom: '12px' }}>ADDITIONAL MARKETS - via bookmakers</div>
-            {['Both Teams To Score (BTTS)', 'Correct Score', 'Anytime Goalscorer', 'First Goalscorer', 'Player Cards', 'Corners', 'Penalties'].map(m => (
-              <div key={m} style={{ padding: '8px 0', borderBottom: '1px solid #1E2530', fontSize: '13px', color: '#8B949E' }}>{m}</div>
-            ))}
-          </div>
+          <EngineMarkets h={h} a={a} odds={odds} homeTeam={match.home_team} awayTeam={match.away_team} />
           <div style={{ background: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '10px', padding: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', letterSpacing: '1px', marginBottom: '10px' }}>BET WITH</div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -335,7 +447,6 @@ export default function MatchDetailPage() {
         </div>
       )}
 
-      {/* TIPSTER PICKS */}
       {activeSection === 'tips' && picks.length > 0 && (
         <div>
           {picks.map((pick, i) => {
@@ -360,7 +471,6 @@ export default function MatchDetailPage() {
         </div>
       )}
 
-      {/* MATCH EVENTS */}
       {activeSection === 'events' && (
         <div>
           {events.length === 0 ? (
