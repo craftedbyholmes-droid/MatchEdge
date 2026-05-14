@@ -25,6 +25,51 @@ function decToFrac(dec) {
   return Math.round(n) + '/1'
 }
 
+// Derive unit scores from engine factors + total scores
+// Returns { homeAttack, homeMid, homeDef, awayAttack, awayMid, awayDef } all 0-100
+function deriveUnitScores(totalHome, totalAway, factors, weights) {
+  const h = totalHome || 50
+  const a = totalAway || 50
+  const f = factors || {}
+  const w = weights || {}
+
+  // Odds factor is primarily an attack/goal signal
+  const oddsAdj    = f.odds    || 0
+  // Standing/form drives overall team quality including defence
+  const standAdj   = f.standing || 0
+  const formAdj    = f.form    || 0
+  // Sidelined hits defence hardest
+  const slAdj      = f.sidelined || 0
+  // H2H is tactical — midfield proxy
+  const h2hAdj     = f.h2h     || 0
+  // Home advantage boosts attack more than defence
+  const homeAdv    = f.home_adv || 0
+
+  // Home unit scores — derived from engine factors weighted by unit type
+  // Attack: boosted by odds (goal expectation) and home advantage
+  const homeAttackRaw = h + (oddsAdj * 0.6) + (homeAdv * 0.8) + (formAdj * 0.4)
+  // Defence: quality signal from standing, penalised by sidelined
+  const homeDefRaw    = h - (oddsAdj * 0.2) + (standAdj * 0.5) - (slAdj * 0.8)
+  // Midfield: blend of standing quality + h2h tactical record
+  const homeMidRaw    = h + (standAdj * 0.3) + (h2hAdj * 0.5) + (formAdj * 0.3)
+
+  // Away unit scores — mirror the adjustments
+  const awayAttackRaw = a - (oddsAdj * 0.6) + (formAdj * 0.4)
+  const awayDefRaw    = a + (oddsAdj * 0.2) + (standAdj * 0.3) + (slAdj * 0.8)
+  const awayMidRaw    = a - (standAdj * 0.3) - (h2hAdj * 0.5) + (formAdj * 0.3)
+
+  const clamp = (v) => Math.round(Math.max(20, Math.min(100, v)) * 10) / 10
+
+  return {
+    homeAttack: clamp(homeAttackRaw),
+    homeMid:    clamp(homeMidRaw),
+    homeDef:    clamp(homeDefRaw),
+    awayAttack: clamp(awayAttackRaw),
+    awayMid:    clamp(awayMidRaw),
+    awayDef:    clamp(awayDefRaw),
+  }
+}
+
 function OddsCard({ label, odds, signal, colour }) {
   return (
     <div style={{ flex: 1, background: signal ? colour + '15' : '#ffffff', border: '1px solid ' + (signal ? colour + '60' : '#e0e0e0'), borderRadius: '8px', padding: '10px 8px', textAlign: 'center' }}>
@@ -68,69 +113,95 @@ function playerShortName(p) {
   return parts.length > 1 ? parts[parts.length - 1] : full
 }
 
-function ZoneBlock({ players, colour, label, advantage, align }) {
-  const isLeft = align === 'left'
+// Score bar 0-100 shown as a coloured pill
+function ScoreBar({ score, colour, label }) {
+  const pct = Math.round(score || 50)
+  const barColour = pct >= 70 ? '#00C896' : pct >= 55 ? '#F0B90B' : '#ef4444'
   return (
-    <div style={{
-      flex: 1, minWidth: 0,
-      background: advantage ? colour + '25' : 'rgba(255,255,255,0.05)',
-      border: '1px solid ' + (advantage ? colour : 'rgba(255,255,255,0.1)'),
-      borderRadius: '6px', padding: '8px 6px',
-      textAlign: 'center'
-    }}>
-      <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginBottom: '5px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{label}</div>
-      {players.length > 0
-        ? <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {players.map((p, i) => (
-              <span key={i} style={{
-                background: advantage ? colour : 'rgba(255,255,255,0.12)',
-                color: '#fff', fontSize: '11px', fontWeight: 700,
-                padding: '3px 7px', borderRadius: '4px',
-                display: 'inline-block', whiteSpace: 'nowrap'
-              }}>
-                {playerShortName(p)}
-              </span>
-            ))}
-          </div>
-        : <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.15)' }}>—</span>
-      }
-      {advantage && <div style={{ fontSize: '9px', color: colour, fontWeight: 800, marginTop: '4px' }}>EDGE</div>}
+    <div style={{ marginBottom: '4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+        <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
+        <span style={{ fontSize: '10px', fontWeight: 800, color: barColour }}>{pct}</span>
+      </div>
+      <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: pct + '%', background: barColour, borderRadius: '2px', transition: 'width 0.3s' }} />
+      </div>
     </div>
   )
 }
 
-// Home is always on the LEFT column, away always on the RIGHT
-// attackRow: home attackers face away defenders (home attacks right→left on pitch but always displayed left)
-// defenceRow: away attackers face home defenders
-function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour, homeAttacks }) {
+function ZoneBlock({ players, colour, label, unitScore, advantage }) {
+  const score = Math.round(unitScore || 50)
+  const scoreColour = score >= 70 ? '#00C896' : score >= 55 ? '#F0B90B' : '#ef4444'
+  return (
+    <div style={{
+      flex: 1, minWidth: 0,
+      background: advantage ? colour + '20' : 'rgba(255,255,255,0.04)',
+      border: '1px solid ' + (advantage ? colour : 'rgba(255,255,255,0.1)'),
+      borderRadius: '6px', padding: '8px 6px', textAlign: 'center'
+    }}>
+      <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+      {players.length > 0
+        ? <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
+            {players.map((p, i) => (
+              <span key={i} style={{ background: advantage ? colour : 'rgba(255,255,255,0.12)', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 7px', borderRadius: '4px', display: 'inline-block', whiteSpace: 'nowrap' }}>
+                {playerShortName(p)}
+              </span>
+            ))}
+          </div>
+        : <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.15)', marginBottom: '6px' }}>TBC</div>
+      }
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+        <div style={{ height: '3px', flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: score + '%', background: scoreColour, borderRadius: '2px' }} />
+        </div>
+        <span style={{ fontSize: '10px', fontWeight: 800, color: scoreColour, minWidth: '24px', textAlign: 'right' }}>{score}</span>
+      </div>
+      {advantage && <div style={{ fontSize: '9px', color: colour, fontWeight: 800, marginTop: '3px' }}>EDGE</div>}
+    </div>
+  )
+}
+
+function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour, homeAttacks, homeUnitScore, awayUnitScore }) {
   const zones = ['left', 'centre', 'right']
   const zoneLabels = { left: 'Left', centre: 'Centre', right: 'Right' }
 
-  // When home attacks: left col = home attackers, right col = away defenders
-  // When away attacks: left col = away attackers, right col = home defenders
-  // But we always show HOME team on the LEFT side of the page
-  const leftZones  = homeAttacks ? homeZones  : awayZones
-  const rightZones = homeAttacks ? awayZones  : homeZones
+  const leftZones   = homeAttacks ? homeZones  : awayZones
+  const rightZones  = homeAttacks ? awayZones  : homeZones
   const leftColour  = homeAttacks ? homeColour : awayColour
   const rightColour = homeAttacks ? awayColour : homeColour
+  const leftScore   = homeAttacks ? homeUnitScore : awayUnitScore
+  const rightScore  = homeAttacks ? awayUnitScore : homeUnitScore
+  const leftAdv     = leftScore > rightScore
 
   return (
     <div style={{ marginBottom: '14px' }}>
-      <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textAlign: 'center', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1px', textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: leftAdv ? leftColour : 'rgba(255,255,255,0.3)' }}>{Math.round(leftScore)}</span>
+          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)' }}>vs</span>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: !leftAdv ? rightColour : 'rgba(255,255,255,0.3)' }}>{Math.round(rightScore)}</span>
+        </div>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 24px 1fr', gap: '6px', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           {zones.map(z => {
             const lPlayers = leftZones[z] || []
             const rPlayers = rightZones[z] || []
-            return <ZoneBlock key={z} players={lPlayers} colour={leftColour} label={zoneLabels[z]} advantage={lPlayers.length > rPlayers.length} align='left' />
+            // Distribute unit score across zones proportionally by player count
+            const totalPlayers = lPlayers.length + rPlayers.length || 1
+            const zoneScore = Math.round(leftScore * (lPlayers.length / Math.max(1, lPlayers.length + rPlayers.length) + 0.5) / 1.5)
+            return <ZoneBlock key={z} players={lPlayers} colour={leftColour} label={zoneLabels[z]} unitScore={zoneScore} advantage={lPlayers.length > rPlayers.length || (lPlayers.length === rPlayers.length && leftScore > rightScore)} />
           })}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.15)', paddingTop: '24px' }}>vs</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.15)', paddingTop: '28px' }}>vs</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           {zones.map(z => {
             const lPlayers = leftZones[z] || []
             const rPlayers = rightZones[z] || []
-            return <ZoneBlock key={z} players={rPlayers} colour={rightColour} label={zoneLabels[z]} advantage={rPlayers.length > lPlayers.length} align='right' />
+            const zoneScore = Math.round(rightScore * (rPlayers.length / Math.max(1, lPlayers.length + rPlayers.length) + 0.5) / 1.5)
+            return <ZoneBlock key={z} players={rPlayers} colour={rightColour} label={zoneLabels[z]} unitScore={zoneScore} advantage={rPlayers.length > lPlayers.length || (rPlayers.length === lPlayers.length && rightScore > leftScore)} />
           })}
         </div>
       </div>
@@ -138,44 +209,68 @@ function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour, 
   )
 }
 
-function MidfieldRow({ homeMid, awayMid }) {
-  const hAdv = homeMid.length > awayMid.length
-  const aAdv = awayMid.length > homeMid.length
+function MidfieldRow({ homeMid, awayMid, homeMidScore, awayMidScore }) {
+  const hAdv = homeMidScore > awayMidScore
+  const aAdv = awayMidScore > homeMidScore
+  const hScore = Math.round(homeMidScore || 50)
+  const aScore = Math.round(awayMidScore || 50)
+  const hColour = hScore >= 70 ? '#00C896' : hScore >= 55 ? '#F0B90B' : '#ef4444'
+  const aColour = aScore >= 70 ? '#00C896' : aScore >= 55 ? '#F0B90B' : '#ef4444'
   return (
     <div style={{ marginBottom: '14px' }}>
-      <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textAlign: 'center', letterSpacing: '1px', marginBottom: '8px', textTransform: 'uppercase' }}>Midfield Battle</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1px', textTransform: 'uppercase' }}>Midfield Battle</div>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: hAdv ? '#00C896' : 'rgba(255,255,255,0.3)' }}>{hScore}</span>
+          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)' }}>vs</span>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: aAdv ? '#993C1D' : 'rgba(255,255,255,0.3)' }}>{aScore}</span>
+        </div>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 24px 1fr', gap: '6px', alignItems: 'center' }}>
-        <div style={{ background: hAdv ? 'rgba(0,200,150,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (hAdv ? '#00C896' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '10px 6px', textAlign: 'center' }}>
-          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ background: hAdv ? 'rgba(0,200,150,0.12)' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (hAdv ? '#00C896' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '10px 6px' }}>
+          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
             {homeMid.length > 0
               ? homeMid.map((p, i) => <span key={i} style={{ background: hAdv ? '#00C896' : 'rgba(255,255,255,0.12)', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 7px', borderRadius: '4px', display: 'inline-block', whiteSpace: 'nowrap' }}>{playerShortName(p)}</span>)
               : <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.15)' }}>TBC</span>
             }
           </div>
-          {hAdv && <div style={{ fontSize: '9px', color: '#00C896', fontWeight: 800, marginTop: '4px' }}>EDGE</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', paddingTop: '2px' }}>
+            <div style={{ height: '3px', flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: hScore + '%', background: hColour, borderRadius: '2px' }} />
+            </div>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: hColour }}>{hScore}</span>
+          </div>
+          {hAdv && <div style={{ fontSize: '9px', color: '#00C896', fontWeight: 800, marginTop: '4px', textAlign: 'center' }}>EDGE</div>}
         </div>
         <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.15)' }}>vs</div>
-        <div style={{ background: aAdv ? 'rgba(153,60,29,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (aAdv ? '#993C1D' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '10px 6px', textAlign: 'center' }}>
-          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ background: aAdv ? 'rgba(153,60,29,0.12)' : 'rgba(255,255,255,0.04)', border: '1px solid ' + (aAdv ? '#993C1D' : 'rgba(255,255,255,0.1)'), borderRadius: '6px', padding: '10px 6px' }}>
+          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
             {awayMid.length > 0
               ? awayMid.map((p, i) => <span key={i} style={{ background: aAdv ? '#993C1D' : 'rgba(255,255,255,0.12)', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 7px', borderRadius: '4px', display: 'inline-block', whiteSpace: 'nowrap' }}>{playerShortName(p)}</span>)
               : <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.15)' }}>TBC</span>
             }
           </div>
-          {aAdv && <div style={{ fontSize: '9px', color: '#993C1D', fontWeight: 800, marginTop: '4px' }}>EDGE</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', paddingTop: '2px' }}>
+            <div style={{ height: '3px', flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: aScore + '%', background: aColour, borderRadius: '2px' }} />
+            </div>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: aColour }}>{aScore}</span>
+          </div>
+          {aAdv && <div style={{ fontSize: '9px', color: '#993C1D', fontWeight: 800, marginTop: '4px', textAlign: 'center' }}>EDGE</div>}
         </div>
       </div>
     </div>
   )
 }
 
-function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, awayLineup, formationHome, formationAway }) {
+function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, awayLineup, formationHome, formationAway, factors, weights }) {
   const h = homeScore || 0
   const a = awayScore || 0
   const gap = Math.abs(h - a)
   const home = groupLineup(homeLineup || [])
   const away = groupLineup(awayLineup || [])
   const hasLineups = (homeLineup || []).length > 0 || (awayLineup || []).length > 0
+  const units = deriveUnitScores(h, a, factors, weights)
 
   return (
     <div style={{ background: 'linear-gradient(180deg, #0d2b0d 0%, #1a3a1a 50%, #0d2b0d 100%)', borderRadius: '12px', padding: '16px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
@@ -214,8 +309,15 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
               homeColour='#185FA5'
               awayColour='#993C1D'
               homeAttacks={true}
+              homeUnitScore={units.homeAttack}
+              awayUnitScore={units.awayDef}
             />
-            <MidfieldRow homeMid={home.mid} awayMid={away.mid} />
+            <MidfieldRow
+              homeMid={home.mid}
+              awayMid={away.mid}
+              homeMidScore={units.homeMid}
+              awayMidScore={units.awayMid}
+            />
             <PositionalClash
               label={awayTeam + ' Attack vs ' + homeTeam + ' Defence'}
               homeZones={home.defSplit}
@@ -223,6 +325,8 @@ function PitchBlockView({ homeTeam, awayTeam, homeScore, awayScore, homeLineup, 
               homeColour='#185FA5'
               awayColour='#993C1D'
               homeAttacks={false}
+              homeUnitScore={units.homeDef}
+              awayUnitScore={units.awayAttack}
             />
           </>
         ) : (
@@ -316,7 +420,7 @@ export default function MatchDetailPage() {
 
   const { match, latest_score: score, odds, events, picks,
           home_lineup, away_lineup, home_sidelined, away_sidelined,
-          formation_home, formation_away, preview_prediction, scores } = data
+          formation_home, formation_away, factors, weights } = data
 
   const h = score?.total_home || 0
   const a = score?.total_away || 0
@@ -388,7 +492,7 @@ export default function MatchDetailPage() {
 
       {activeSection === 'overview' && (
         <div>
-          <PitchBlockView homeTeam={match.home_team} awayTeam={match.away_team} homeScore={match.home_score} awayScore={match.away_score} homeLineup={home_lineup} awayLineup={away_lineup} formationHome={formation_home} formationAway={formation_away} />
+          <PitchBlockView homeTeam={match.home_team} awayTeam={match.away_team} homeScore={h} awayScore={a} homeLineup={home_lineup} awayLineup={away_lineup} formationHome={formation_home} formationAway={formation_away} factors={factors} weights={weights} />
           {odds?.match_winner && (
             <div style={{ background: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#888', letterSpacing: '1px', marginBottom: '10px' }}>MATCH RESULT</div>
@@ -420,7 +524,7 @@ export default function MatchDetailPage() {
 
       {activeSection === 'pitch' && (
         <div>
-          <PitchBlockView homeTeam={match.home_team} awayTeam={match.away_team} homeScore={match.home_score} awayScore={match.away_score} homeLineup={home_lineup} awayLineup={away_lineup} formationHome={formation_home} formationAway={formation_away} />
+          <PitchBlockView homeTeam={match.home_team} awayTeam={match.away_team} homeScore={h} awayScore={a} homeLineup={home_lineup} awayLineup={away_lineup} formationHome={formation_home} formationAway={formation_away} factors={factors} weights={weights} />
           {(home_sidelined.length > 0 || away_sidelined.length > 0) && (
             <div style={{ background: '#161B22', border: '1px solid #ef444440', borderRadius: '10px', padding: '16px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#ef4444', letterSpacing: '1px', marginBottom: '10px' }}>UNAVAILABLE PLAYERS</div>
