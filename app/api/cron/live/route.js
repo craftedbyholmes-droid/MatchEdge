@@ -82,36 +82,53 @@ export async function GET(request) {
           away_ht_score: awayHT
         }).eq('fixture_id', fixtureId)
 
-        // Step 4 - extract and store goal events (this is what we need for Pez)
-        const events = match.events || []
+        // Extract and store goal events
+        const events = match.events || match.match_events || match.timeline || []
         const goals = events.filter(e => {
-          const type = (e.type || e.event_type || '').toLowerCase()
-          return type === 'goal' || type === 'penalty' || type === 'own_goal'
+          const type = (e.type || e.event_type || e.incident_type || '').toLowerCase()
+          return type.includes('goal') || type === 'penalty'
         })
 
-        for (const goal of goals) {
-          const playerId = goal.player?.id || goal.player_id || null
-          const playerName = goal.player?.name || goal.player_name || null
-          const teamId = goal.team?.id || goal.team_id || null
-          const minute = goal.minute || goal.match_minute || null
-          const type = (goal.type || goal.event_type || 'goal').toLowerCase()
+        // Also check stats-level scorers if events array is empty
+        const statScorers = []
+        if (goals.length === 0) {
+          const homeScorers = match.stats?.home_scorers || match.home_scorers || []
+          const awayScorers = match.stats?.away_scorers || match.away_scorers || []
+          for (const s of [...homeScorers, ...awayScorers]) {
+            const name = s.player?.name || s.name || s.player_name || null
+            if (name) statScorers.push({ player_name: name, minute: s.minute || s.match_minute || null, event_type: 'goal', team_id: s.team?.id || s.team_id || null, player_id: s.player?.id || s.player_id || null })
+          }
+        }
 
-          if (!playerName) continue
+        const allGoalEvents = goals.length > 0
+          ? goals.map(g => ({
+              player_name: g.player?.name || g.player_name || null,
+              player_id:   g.player?.id || g.player_id || null,
+              team_id:     g.team?.id || g.team_id || null,
+              minute:      g.minute || g.match_minute || null,
+              event_type:  (g.type || g.event_type || 'goal').toLowerCase()
+            }))
+          : statScorers
 
-          const eventId = fixtureId + '_goal_' + (playerId || playerName.replace(/\\s/g, '')) + '_' + (minute || '0')
-
+        for (const goal of allGoalEvents) {
+          if (!goal.player_name) continue
+          const eventId = fixtureId + '_goal_' + (goal.player_id || goal.player_name.replace(/\s/g, '')) + '_' + (goal.minute || '0')
           await supabaseAdmin.from('match_event_log').upsert({
             event_id:    eventId,
             fixture_id:  fixtureId,
             match_date:  new Date().toISOString().split('T')[0],
-            player_id:   playerId,
-            player_name: playerName,
-            team_id:     teamId,
-            event_type:  type,
-            minute:      minute
+            player_id:   goal.player_id,
+            player_name: goal.player_name,
+            team_id:     goal.team_id,
+            event_type:  goal.event_type,
+            minute:      goal.minute
           }, { onConflict: 'event_id', ignoreDuplicates: true })
-
           goalEvents++
+        }
+
+        // Log raw structure once per run for debugging
+        if (goals.length === 0 && statScorers.length === 0 && isFinished) {
+          console.log('NO_EVENTS_FOUND fixture=' + fixtureId + ' keys=' + Object.keys(match).join(','))
         }
 
         if (isFinished) finished++
