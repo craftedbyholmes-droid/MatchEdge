@@ -140,5 +140,8 @@ export async function GET(request) {
     }
 
     return NextResponse.json({ ok: true, live: updated, finished, goalEvents, fetched: toFetch.size })
-  } catch(err) { return NextResponse.json({ error: err.message }, { status: 500 }) }
+  } catch(err) {
+    console.error('[live] FATAL:', err.message)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
