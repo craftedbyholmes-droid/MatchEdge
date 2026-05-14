@@ -23,7 +23,7 @@ export async function GET(request) {
     const { data: allMatches } = await supabaseAdmin
       .from('matches')
       .select('fixture_id, home_team, away_team, league, kickoff_time, sd_league_id')
-      .in('status', ['scheduled', 'pre-match'])
+      .in('status', ['scheduled', 'pre-match', 'upcoming'])
       .gte('kickoff_time', now.toISOString())
       .lte('kickoff_time', horizon)
       .order('kickoff_time', { ascending: true })

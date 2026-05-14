@@ -30,7 +30,7 @@ export async function GET(request) {
       .select('*')
       .is('outcome', null)
       .gte('pick_date', sevenDaysAgo)
-      .lt('pick_date', today)
+      .lte('pick_date', today)
 
     if (!unsettled?.length) return NextResponse.json({ ok: true, settled: 0, message: 'No unsettled picks' })
 
