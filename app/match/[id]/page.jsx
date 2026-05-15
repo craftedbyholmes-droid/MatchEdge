@@ -424,8 +424,8 @@ export default function MatchDetailPage() {
   if (!data?.match) return <div style={{ padding: '40px', textAlign: 'center', color: '#484F58' }}>Match not found.</div>
 
   const { match, latest_score: score, odds, events, picks,
-          home_lineup, away_lineup, home_sidelined, away_sidelined,
-          formation_home, formation_away, factors, weights } = data
+          home_lineup = [], away_lineup = [], home_sidelined = [], away_sidelined = [],
+          formation_home, formation_away, factors, weights } = data || {}
 
   const h = score?.total_home || 0
   const a = score?.total_away || 0
