@@ -88,9 +88,11 @@ export async function GET(request) {
         const result = scoreMatch({ matchDetail, h2h, homeStanding, awayStanding, preview, weights })
 
         // Score state
+        // Check if lineups cron has already confirmed this match (score_state=4 on matches table)
+        const { data: matchRow } = await supabaseAdmin.from('matches').select('score_state').eq('fixture_id', match.fixture_id).single()
         let scoreState = 1
-        if (matchDetail.lineup_type === 'confirmed') scoreState = 4
-        else if (matchDetail.lineup_type === 'projected') scoreState = 3
+        if (matchRow?.score_state === 4 || matchDetail.lineup_type === 'confirmed') scoreState = 4
+        else if (matchDetail.lineup_type === 'projected' || matchDetail.home_lineup?.length >= 11) scoreState = 3
         else if (preview?.has_preview) scoreState = 2
 
         await supabaseAdmin.from('match_scores').upsert({
