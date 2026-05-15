@@ -192,8 +192,6 @@ function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour, 
             const rPlayers = rightZones[z] || []
             // Attack score split equally across 3 zones (left/centre/right)
             // Defence score split by number of defenders in that zone
-            const leftZoneCount  = (leftZones.left || []).length + (leftZones.centre || []).length + (leftZones.right || []).length || 3
-            const rightZoneCount = (rightZones.left || []).length + (rightZones.centre || []).length + (rightZones.right || []).length || 3
             const zoneScore = Math.round(leftScore / 3)
             return <ZoneBlock key={z} players={lPlayers} colour={leftColour} label={zoneLabels[z]} unitScore={zoneScore} advantage={lPlayers.length > rPlayers.length || (lPlayers.length === rPlayers.length && leftScore > rightScore)} />
           })}
@@ -203,9 +201,8 @@ function PositionalClash({ label, homeZones, awayZones, homeColour, awayColour, 
           {zones.map(z => {
             const lPlayers = leftZones[z] || []
             const rPlayers = rightZones[z] || []
-            const defPlayersInZone = Math.max(1, rPlayers.length)
-            const totalDefPlayers = Math.max(1, rightZoneCount)
-            const zoneScore = Math.round((rightScore / totalDefPlayers) * defPlayersInZone)
+            const totalDefPlayers = Math.max(1, (rightZones.left || []).length + (rightZones.centre || []).length + (rightZones.right || []).length)
+            const zoneScore = Math.round((rightScore / totalDefPlayers) * Math.max(1, rPlayers.length))
             return <ZoneBlock key={z} players={rPlayers} colour={rightColour} label={zoneLabels[z]} unitScore={zoneScore} advantage={rPlayers.length > lPlayers.length || (rPlayers.length === lPlayers.length && rightScore > leftScore)} />
           })}
         </div>
